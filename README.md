@@ -8,7 +8,7 @@ For DAI, this would require a simple signature and the call to `permit`
 
 The contract has also the ability to transfer the approved token by simply signing a meta-tx.
 
-The `amount` field cannot be used when data is being passed.
+The `amount` field allow the meta tx contract to approve the amount to be used by receiver but unfortunatelythis cannot be greater than zero when data is being passed.
 This is because the `approve` function of ERC20 need to be called by the owner and cannot be executed by an `operator`
 
 If this was possible, the meta tx processor could automatically approve the receiver so user do not need to pre-approve.
