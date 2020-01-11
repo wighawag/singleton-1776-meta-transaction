@@ -10,7 +10,7 @@ import "./Interfaces/ERC1654.sol";
 import "./Interfaces/ERC1654Constants.sol";
 import "./Interfaces/ERC20.sol";
 
-contract GenericMetaTransaction is ERC1271Constants, ERC1654Constants {
+contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
 
     // ////////////// LIBRARIES /////////////////
     using SafeMath for uint256;
