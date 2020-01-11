@@ -1,0 +1,14 @@
+{
+  "name": "generic-meta-transaction",
+  "version": "0.0.1",
+  "description": "Generic Meta Transaction Processor",
+  "main": "index.js",
+  "repository": "https://github.com/wighawag/generic-meta-transaction",
+  "author": "wighawag",
+  "license": "GPL",
+  "dependencies": {
+    "ganache-core": "^2.9.1",
+    "rocketh": "^0.4.22",
+    "solc": "^0.6.1"
+  }
+}
