@@ -3,27 +3,27 @@ pragma solidity 0.6.1;
 import "../Libraries/AddressUtils.sol";
 import "../Interfaces/ERC721TokenReceiver.sol";
 import "../Interfaces/ERC721.sol";
-import "../Interfaces/ERC721MandatoryTokenReceiver.sol";
+import "../Interfaces/ERC721Enumerable.sol";
 
 import "../EIP1776MetaTxReceiverBase.sol";
 
-contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems to require overrides :(
+contract Numbers is /*ERC721, ERC721Enumerable,*/ EIP1776MetaTxReceiverBase { // interface seems to require overrides :(
 
     //////////////////////////// ERC721 Events /////////////
     event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _tokenId
+        address indexed from,
+        address indexed to,
+        uint256 indexed tokenId
     );
     event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
+        address indexed owner,
+        address indexed approved,
+        uint256 indexed tokenId
     );
     event ApprovalForAll(
-        address indexed _owner,
-        address indexed _operator,
-        bool _approved
+        address indexed owner,
+        address indexed operator,
+        bool approved
     );
     /////////////////////////////////////////////////////////
 
@@ -31,13 +31,11 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
     using AddressUtils for address;
 
     bytes4 internal constant _ERC721_RECEIVED = 0x150b7a02;
-    bytes4 internal constant _ERC721_BATCH_RECEIVED = 0x4b808c46;
 
     bytes4 internal constant ERC165ID = 0x01ffc9a7;
-    bytes4 internal constant ERC721_MANDATORY_RECEIVER = 0x5e8bf644;
 
-    mapping (address => uint256) public _numNFTPerAddress;
-    mapping (uint256 => uint256) public _owners;
+    mapping(uint256 => uint256) _ownerAndIndex; // max 2**96 items, store both owner and item index
+    mapping(address => uint256[]) _itemsPerOwner;
     mapping (address => mapping(address => bool)) public _operatorsForAll;
     mapping (uint256 => address) public _operators;
 
@@ -52,16 +50,43 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
     function mint(address to) external {
         // TODO only specified minter can do
         uint256 id = _nextId++;
-        _owners[id] = uint256(to);
-        _numNFTPerAddress[to]++;
+        uint256 index = _itemsPerOwner[to].length;
+        _itemsPerOwner[to].push(id);
+        _ownerAndIndex[id] = uint256(to) + index * 2**160;
         emit Transfer(address(0), to, id);
     }
 
-    function _transferFrom(address from, address to, uint256 id) internal {
-        _numNFTPerAddress[from]--;
-        _numNFTPerAddress[to]++;
-        _owners[id] = uint256(to);
+    function _transferFrom(address from, address to, uint256 id, bool safe, bytes memory data) internal {
+        (address owner, uint256 index, bool operatorEnabled) = _ownerIndexAndOperatorEnabledOf(id);
+        require(owner != address(0), "DOES_NOT_EXIST");
+        require(owner == from, "NOT_OWNER");
+        require(to != address(0), "ZERO_ADDRESS");
+        bool isMeta = isMetaTx();
+        if (msg.sender != from && !isMeta) {
+            require(
+                _operatorsForAll[from][msg.sender] ||
+                (operatorEnabled && _operators[id] == msg.sender),
+                "NOT_AUTHORIZED"
+            );
+        }
+
+        uint256 lastItemId = _itemsPerOwner[from][_itemsPerOwner[from].length-1]; // TODO for silidity: should pop return the item ?
+        _itemsPerOwner[from].pop();
+        if (id != lastItemId) {
+            _itemsPerOwner[from][index] = lastItemId;
+            _ownerAndIndex[lastItemId] = uint256(from) + index * 2**160;
+        }
+
+        uint256 newIndex = _itemsPerOwner[to].length;
+        _itemsPerOwner[to].push(id);
+        _ownerAndIndex[id] = uint256(to) + newIndex * 2**160;
         emit Transfer(from, to, id);
+        if (safe && to.isContract()) {
+            require(
+                _checkOnERC721Received(isMeta ? from : msg.sender, from, to, id, data),
+                "ERC721_TRANSFER_FAILED"
+            );
+        }
     }
 
     /**
@@ -71,17 +96,25 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
      */
     function balanceOf(address owner) external view returns (uint256) {
         require(owner != address(0), "owner is zero address");
-        return _numNFTPerAddress[owner];
+        return _itemsPerOwner[owner].length;
     }
 
 
-    function _ownerOf(uint256 id) internal view returns (address) {
-        return address(_owners[id]);
+    function _ownerOf(uint256 id) internal view returns (address tokenOwner) {
+        tokenOwner = address(_ownerAndIndex[id]);
+        require(tokenOwner != address(0), "token does not exist");
     }
 
     function _ownerAndOperatorEnabledOf(uint256 id) internal view returns (address owner, bool operatorEnabled) {
-        uint256 data = _owners[id];
+        uint256 data = _ownerAndIndex[id];
         owner = address(data);
+        operatorEnabled = (data / 2**255) == 1;
+    }
+
+    function _ownerIndexAndOperatorEnabledOf(uint256 id) internal view returns (address owner, uint256 index, bool operatorEnabled) {
+        uint256 data = _ownerAndIndex[id];
+        owner = address(data);
+        index = (data & 0xEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) / 2**160;
         operatorEnabled = (data / 2**255) == 1;
     }
 
@@ -95,11 +128,14 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
         require(owner != address(0), "token does not exist");
     }
 
-    function _approveFor(address owner, address operator, uint256 id) internal {
+    function _approveFor(address sender, address operator, uint256 id) internal {
+        (address owner, uint256 index, bool operatorEnabled) = _ownerIndexAndOperatorEnabledOf(id);
+        require(owner != address(0), "DOES_NOT_EXIST");
+        require(owner == sender, "NOT_OWNER");
         if(operator == address(0)) {
-            _owners[id] = uint256(owner); // no need to resset the operator, it will be overriden next time
+            _ownerAndIndex[id] = uint256(owner) + index * 2**160; // no need to resset the operator, it will be overriden next time
         } else {
-            _owners[id] = uint256(owner) + 2**255;
+            _ownerAndIndex[id] = uint256(owner) + index * 2**160 + 2**255;
             _operators[id] = operator;
         }
         emit Approval(owner, operator, id);
@@ -116,11 +152,9 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
         address operator,
         uint256 id
     ) external {
-        address owner = _ownerOf(id);
         require(sender != address(0), "ZERO_ADDRESS");
         require(isValidApproveOperator(sender), "NOT_AUTHORIZED");
-        require(owner == sender, "NOT_OWNER");
-        _approveFor(owner, operator, id);
+        _approveFor(sender, operator, id);
     }
 
     /**
@@ -130,11 +164,9 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
      */
     function approve(address operator, uint256 id) external {
         address owner = _ownerOf(id);
-        require(owner != address(0), "DOES_NOT_EXIST");
-
         // NO META TX here as the first parameter is not the originator but the operator that is meant to be approved
         require(
-            owner == msg.sender ||
+            owner == msg.sender || // TODO remove duplicatre check
             _operatorsForAll[owner][msg.sender],
             "NOT_AUTHORIZED"
         );
@@ -156,53 +188,6 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
         }
     }
 
-    function _checkTransfer(address from, address to, uint256 id) internal view returns (bool isMeta) {
-        (address owner, bool operatorEnabled) = _ownerAndOperatorEnabledOf(id);
-        require(owner != address(0), "DOES_NOT_EXIST");
-        require(owner == from, "NOT_OWNER");
-        require(to != address(0), "ZERO_ADDRESS");
-        isMeta = isMetaTx();
-        if (msg.sender != from && !isMeta) {
-            require(
-                _operatorsForAll[from][msg.sender] ||
-                (operatorEnabled && _operators[id] == msg.sender),
-                "NOT_AUTHORIZED"
-            );
-        }
-    }
-
-    function _checkInterfaceWith10000Gas(address _contract, bytes4 interfaceId)
-        internal
-        view
-        returns (bool)
-    {
-        bool success;
-        bool result;
-        bytes memory call_data = abi.encodeWithSelector(
-            ERC165ID,
-            interfaceId
-        );
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            let call_ptr := add(0x20, call_data)
-            let call_size := mload(call_data)
-            let output := mload(0x40) // Find empty storage location using "free memory pointer"
-            mstore(output, 0x0)
-            success := staticcall(
-                10000,
-                _contract,
-                call_ptr,
-                call_size,
-                output,
-                0x20
-            ) // 32 bytes
-            result := mload(output)
-        }
-        // (10000 / 63) "not enough for supportsInterface(...)" // consume all gas, so caller can potentially know that there was not enough gas
-        assert(gasleft() > 158);
-        return success && result;
-    }
-
     /**
      * @notice Transfer a token between 2 addresses
      * @param from The sender of the token
@@ -210,14 +195,7 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
      * @param id The id of the token
     */
     function transferFrom(address from, address to, uint256 id) external {
-        bool metaTx = _checkTransfer(from, to, id);
-        _transferFrom(from, to, id);
-        if (to.isContract() && _checkInterfaceWith10000Gas(to, ERC721_MANDATORY_RECEIVER)) {
-            require(
-                _checkOnERC721Received(metaTx ? from : msg.sender, from, to, id, ""),
-                "ERC721_TRANSFER_FAILED"
-            );
-        }
+        _transferFrom(from, to, id, false, "");
     }
 
     /**
@@ -228,14 +206,7 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
      * @param data Additional data
      */
     function safeTransferFrom(address from, address to, uint256 id, bytes memory data) public {
-        bool metaTx = _checkTransfer(from, to, id);
-        _transferFrom(from, to, id);
-        if (to.isContract()) {
-            require(
-                _checkOnERC721Received(metaTx ? from : msg.sender, from, to, id, data),
-                "ERC721_TRANSFER_FAILED"
-            );
-        }
+        _transferFrom(from, to, id, true, data);
     }
 
     /**
@@ -249,67 +220,15 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
     }
 
     /**
-     * @notice Transfer many tokens between 2 addresses
-     * @param from The sender of the token
-     * @param to The recipient of the token
-     * @param ids The ids of the tokens
-     * @param data additional data
-    */
-    function batchTransferFrom(address from, address to, uint256[] calldata ids, bytes calldata data) external {
-        _batchTransferFrom(from, to, ids, data, false);
-    }
-
-    function _batchTransferFrom(address from, address to, uint256[] memory ids, bytes memory data, bool safe) internal {
-        bool metaTx = isMetaTx();
-        bool authorized = msg.sender == from ||
-            metaTx ||
-            _operatorsForAll[from][msg.sender];
-
-        require(from != address(0), "ZERO_ADDRESS");
-        require(to != address(0), "ZERO_ADDRESS");
-
-        uint256 numTokens = ids.length;
-        for(uint256 i = 0; i < numTokens; i ++) {
-            uint256 id = ids[i];
-            (address owner, bool operatorEnabled) = _ownerAndOperatorEnabledOf(id);
-            require(owner == from, "NOT_OWNER");
-            require(authorized || (operatorEnabled && _operators[id] == msg.sender), "NOT_AUTHORIZED");
-            _owners[id] = uint256(to);
-            emit Transfer(from, to, id);
-        }
-        if (from != to) {
-            _numNFTPerAddress[from] -= numTokens;
-            _numNFTPerAddress[to] += numTokens;
-        }
-
-        if (to.isContract() && (safe || _checkInterfaceWith10000Gas(to, ERC721_MANDATORY_RECEIVER))) {
-            require(
-                _checkOnERC721BatchReceived(metaTx ? from : msg.sender, from, to, ids, data),
-                "ERC721_BATCH_TRANSFER_FAILED"
-            );
-        }
-    }
-
-    /**
-     * @notice Transfer many tokens between 2 addresses ensuring the receiving contract has a receiver method
-     * @param from The sender of the token
-     * @param to The recipient of the token
-     * @param ids The ids of the tokens
-     * @param data additional data
-    */
-    function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, bytes calldata data) external {
-        _batchTransferFrom(from, to, ids, data, true);
-    }
-
-    /**
      * @notice Check if the contract supports an interface
      * 0x01ffc9a7 is ERC-165
      * 0x80ac58cd is ERC-721
+     * 0x780e9d63 is ERC-721 Enumerable Extension
      * @param id The id of the interface
      * @return True if the interface is supported
      */
     function supportsInterface(bytes4 id) external pure returns (bool) {
-        return id == 0x01ffc9a7 || id == 0x80ac58cd;
+        return id == 0x01ffc9a7 || id == 0x80ac58cd || id == 0x780e9d63;
     }
 
     /**
@@ -367,34 +286,6 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
         return _operatorsForAll[owner][operator];
     }
 
-    function _burn(address from, address owner, uint256 id) public {
-        require(from == owner, "NOT_OWNER");
-        _owners[id] = 2**160; // cannot mint it again
-        _numNFTPerAddress[from]--;
-        emit Transfer(from, address(0), id);
-    }
-
-    /// @notice Burns token `id`.
-    /// @param id token which will be burnt.
-    function burn(uint256 id) external {
-        _burn(msg.sender, _ownerOf(id), id);
-    }
-
-    /// @notice Burn token`id` from `from`.
-    /// @param from address whose token is to be burnt.
-    /// @param id token which will be burnt.
-    function burnFrom(address from, uint256 id) external {
-        require(from != address(0), "ZERO_ADDRESS");
-        (address owner, bool operatorEnabled) = _ownerAndOperatorEnabledOf(id);
-        require(
-            isValidSender(from) ||
-            (operatorEnabled && _operators[id] == msg.sender) ||
-            _operatorsForAll[from][msg.sender],
-            "NOT_AUTHORIZED"
-        );
-        _burn(from, owner, id);
-    }
-
     function _checkOnERC721Received(address operator, address from, address to, uint256 tokenId, bytes memory _data)
         internal returns (bool)
     {
@@ -402,10 +293,14 @@ contract Numbers is /*ERC721,*/ EIP1776MetaTxReceiverBase { // interface seems t
         return (retval == _ERC721_RECEIVED);
     }
 
-    function _checkOnERC721BatchReceived(address operator, address from, address to, uint256[] memory ids, bytes memory _data)
-        internal returns (bool)
-    {
-        bytes4 retval = ERC721MandatoryTokenReceiver(to).onERC721BatchReceived(operator, from, ids, _data);
-        return (retval == _ERC721_BATCH_RECEIVED);
+    /////////////// erc721 ENUMERABLE //////////////
+    function totalSupply() external view returns (uint256) {
+        return _nextId - 1;
+    }
+    function tokenByIndex(uint256 index) external view returns (uint256) {
+        revert("NOT SUPPORTED");
+    }
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256) {
+        return _itemsPerOwner[owner][index];
     }
 }

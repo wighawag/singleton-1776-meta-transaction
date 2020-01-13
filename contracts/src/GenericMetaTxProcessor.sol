@@ -35,7 +35,8 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     event MetaTx(
         address indexed from,
         uint256 indexed nonce,
-        bool success
+        bool success,
+        bytes returnData
     ); // TODO specify event as part of ERC-1776 ?
     // //////////////////////////////////////////
 
@@ -116,13 +117,13 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         uint256[5] memory params // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
     ) internal view returns (bytes memory) {
 
-        bytes memory paramsEncoded = abi.encode(
-            params[0],
-            params[1],
-            params[2],
-            params[3],
-            params[4]
-        );
+        // bytes memory paramsEncoded = abi.encode(
+        //     params[0],
+        //     params[1],
+        //     params[2],
+        //     params[3],
+        //     params[4]
+        // );
         return abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
@@ -134,8 +135,12 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
                     addresses[2],
                     amount,
                     keccak256(data),
-                    paramsEncoded,
-                    addresses[3]
+                    params[0],
+                    params[1],
+                    params[2],
+                    params[3],
+                    params[4],
+                    0x0000000000000000000000000000000000000000
                 )
             )
         );
@@ -257,11 +262,14 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             }
             success = true;
         } else {
-            require(amount == 0, "amount > 0 and data");
             require(
                 BytesUtil.doFirstParamEqualsAddress(data, from),
                 "first param != from"
             );
+            if(amount > 0) {
+                tokenContract.transferFrom(from, address(this), amount);
+                tokenContract.approve(to, amount);
+            }
             if(params[4] > 0) {
                 (success, returnData) = _executeWithSpecificGasAndChargeForIt(
                     from,
@@ -276,8 +284,15 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             } else {
                 (success, returnData) = _executeWithSpecificGas(to, params[2], data);
             }
+            if(amount > 0) {
+                // TODO refund amount not spent
+            }
         }
 
-        emit MetaTx(from, params[0], success);
+        emit MetaTx(from, params[0], success, returnData);
+    }
+
+    function meta_nonce(address from) external view returns(uint256) {
+        return nonces[from];
     }
 }

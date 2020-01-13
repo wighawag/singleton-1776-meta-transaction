@@ -29,11 +29,21 @@ export default derived(wallet, ($wallet, set) => {
         const balance = await wallet.call('DAI', 'balanceOf', $wallet.address);
         const allowance = await wallet.call('DAI', 'allowance', $wallet.address, metaTxProcessor.address);
         const hasApprovedMetaTxProcessorForDAI = allowance.gt('10000000000000000000');
+
+        // const numbers = wallet.getContract('Numbers');
+        const nftBalance = await wallet.call('Numbers', 'balanceOf', $wallet.address);
+        const items = [];
+        for (let i = 0; i < Math.min(5, nftBalance); i++) {
+            const id = await wallet.call('Numbers', 'tokenOfOwnerByIndex', $wallet.address, i);
+            items.push(id);
+        }
+
         // const balance = await wallet.call('DAI', 'balanceOf', $wallet.address);
         _set({
             status: 'Loaded',
             daiBalance: balance,
-            hasApprovedMetaTxProcessorForDAI
+            hasApprovedMetaTxProcessorForDAI,
+            numbers: items
             // TODO block,
         });
     }
