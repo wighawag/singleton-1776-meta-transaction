@@ -17,3 +17,4 @@ module.exports = async ({namedAccounts, initialRun, deployIfDifferent, getDeploy
         }
     }
 }
+module.exports.skip = async () => true;

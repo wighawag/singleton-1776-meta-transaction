@@ -17,7 +17,10 @@ import('contractsInfo').then((contractsInfo) => {
     }
     
     let fallbackUrl;
-    if (location.host.startsWith('localhost') || location.host.startsWith('127.0.0.1')) {
+    if ( 
+        (process.browser && location.host.startsWith('localhost')) ||
+        (process.browser && location.host.startsWith('127.0.0.1'))
+    ) {
         fallbackUrl = 'http://localhost:8545';
     } else if (contractsInfo['1']) {
         fallbackUrl = 'https://mainnet.infura.io/v3/';
