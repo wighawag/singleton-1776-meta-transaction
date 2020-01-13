@@ -42,7 +42,7 @@ async function transferFirstNumber() {
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 	const txData = await wallet.computeData('Numbers', 'transferFrom', $wallet.address, transferTo, $account.numbers[0]);
-	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address);
+	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, 0);
 
 	const message = {
       from: $wallet.address,
@@ -50,8 +50,8 @@ async function transferFirstNumber() {
 	  tokenContract: daiAddress,
 	  amount: 0,
 	  data: txData.data,
-	  nonce: nonce.toNumber() + 1,
-	  minGasPrice: 0,
+	  batchNonce: nonce.toNumber() + 1,
+	  expiry: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
 	  txGas: 1000000,
 	  baseGas: 100000,
 	  tokenGasPrice: 0,
@@ -69,8 +69,8 @@ async function transferFirstNumber() {
 		{name:"tokenContract",type:"address"},
 		{name:"amount",type:"uint256"},
 		{name:"data",type:"bytes"},
-		{name:"nonce",type:"uint256"},
-		{name:"minGasPrice",type:"uint256"},
+		{name:"batchNonce",type:"uint256"},
+		{name:"expiry",type:"uint256"},
 		{name:"txGas",type:"uint256"},
 		{name:"baseGas",type:"uint256"},
 		{name:"tokenGasPrice",type:"uint256"},
@@ -98,8 +98,8 @@ async function transferFirstNumber() {
 		message.amount,
 		message.data,
 		[
-			message.nonce,
-			message.minGasPrice,
+			message.batchNonce,
+			message.expiry,
 			message.txGas,
 			message.baseGas,
 			message.tokenGasPrice
@@ -114,9 +114,9 @@ async function transferFirstNumber() {
 	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	// console.log(ethers.utils.defaultAbiCoder.decode(['Error(srtring)'],events[0].values[3]));
 	// console.log(ethers.utils.toUtf8String(events[0].values[3]));
-	console.log(errorToAscii(events[0].values[3]));
-	
-	console.log(events);
+	if(!events[0].values[2]) {
+		console.log(errorToAscii(events[0].values[3]));
+	}
 	console.log(receipt);
 	return receipt;
 }
@@ -127,7 +127,7 @@ async function purchaseNumber() {
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 	const txData = await wallet.computeData('NumberSale', 'purchase', $wallet.address, $wallet.address);
-	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address);
+	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, 0);
 
 	const message = {
       from: $wallet.address,
@@ -135,8 +135,8 @@ async function purchaseNumber() {
 	  tokenContract: daiAddress,
 	  amount: '1000000000000000000',
 	  data: txData.data,
-	  nonce: nonce.toNumber() + 1,
-	  minGasPrice: 0,
+	  batchNonce: nonce.toNumber() + 1,
+	  expiry: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
 	  txGas: 1000000,
 	  baseGas: 100000,
 	  tokenGasPrice: 0,
@@ -154,8 +154,8 @@ async function purchaseNumber() {
 		{name:"tokenContract",type:"address"},
 		{name:"amount",type:"uint256"},
 		{name:"data",type:"bytes"},
-		{name:"nonce",type:"uint256"},
-		{name:"minGasPrice",type:"uint256"},
+		{name:"batchNonce",type:"uint256"},
+		{name:"expiry",type:"uint256"},
 		{name:"txGas",type:"uint256"},
 		{name:"baseGas",type:"uint256"},
 		{name:"tokenGasPrice",type:"uint256"},
@@ -183,8 +183,8 @@ async function purchaseNumber() {
 		message.amount,
 		message.data,
 		[
-			message.nonce,
-			message.minGasPrice,
+			message.batchNonce,
+			message.expiry,
 			message.txGas,
 			message.baseGas,
 			message.tokenGasPrice
@@ -194,8 +194,10 @@ async function purchaseNumber() {
 		0,
 		{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
 	);
-	console.log(tx);
 	const receipt = await tx.wait();
+	if(!events[0].values[2]) {
+		console.log(errorToAscii(events[0].values[3]));
+	}
 	console.log(receipt);
 	return receipt;
 }

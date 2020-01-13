@@ -27,21 +27,21 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     bytes32 DOMAIN_SEPARATOR;
 
     bytes32 constant ERC20METATRANSACTION_TYPEHASH = keccak256(
-        "ERC20MetaTransaction(address from,address to,address tokenContract,uint256 amount,bytes data,uint256 nonce,uint256 minGasPrice,uint256 txGas,uint256 baseGas,uint256 tokenGasPrice,address relayer)"
+        "ERC20MetaTransaction(address from,address to,address tokenContract,uint256 amount,bytes data,uint256 batchNonce,uint256 expiry,uint256 txGas,uint256 baseGas,uint256 tokenGasPrice,address relayer)"
     );
     // //////////////////////////////////////////
 
     // //////////////// EVENTS //////////////////
     event MetaTx(
         address indexed from,
-        uint256 indexed nonce,
+        uint256 indexed batchNonce,
         bool success,
         bytes returnData
     ); // TODO specify event as part of ERC-1776 ?
     // //////////////////////////////////////////
 
     // //////////////// STATE ///////////////////
-    mapping(address => uint256) nonces;
+    mapping(address => mapping(uint128 => uint128)) nonces;
     // //////////////////////////////////////////
 
     constructor() public {
@@ -59,7 +59,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     /// @param addresses : from, to, tokenContract, relayer
     /// @param amount number of tokens to be transfered/allowed as part of the call.
     /// @param data bytes to send to the destination.
-    /// @param params the meta-tx parameters : nonce, minGasPrice, txGas, baseGas, tokenGasPrice.
+    /// @param params the meta-tx parameters : batchNonce, expiry, txGas, baseGas, tokenGasPrice.
     /// @param signature the signature that ensure from has allowed the meta-tx to be performed.
     /// @param tokenReceiver recipient of the gas charge.
     /// @param signatureType indicate whether it was signed via EOA=0, EIP-1654=1 or EIP-1271=2.
@@ -69,7 +69,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         address[4] calldata addresses, // from, to, tokenContract, relayer
         uint256 amount,
         bytes calldata data,
-        uint256[5] calldata params, // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
+        uint256[5] calldata params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
         bytes calldata signature,
         address tokenReceiver,
         SignatureType signatureType
@@ -99,50 +99,51 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
 
     function _ensureParametersValidity(
         address from,
-        uint256[5] memory params, // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
+        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
         address relayer
     ) internal view {
         require(
             relayer == address(0) || relayer == msg.sender,
             "wrong relayer"
         );
-        require(nonces[from] + 1 == params[0], "nonce out of order");
-        require(tx.gasprice >= params[1], "gasPrice < signer minGasPrice");
+        require(block.timestamp < params[1], "expired");
+        uint128 batchId = uint128(params[0] / 2**128);
+        uint128 nonce = uint128(params[0]);
+        require(nonces[from][batchId] + 1 == nonce, "nonce out of order");
     }
 
     function _encodeMessage(
         address[4] memory addresses, // from, to, tokenContract, relayer
         uint256 amount,
         bytes memory data,
-        uint256[5] memory params // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
+        uint256[5] memory params // batchNonce, expiry, txGas, baseGas, tokenGasPrice
     ) internal view returns (bytes memory) {
-
-        // bytes memory paramsEncoded = abi.encode(
-        //     params[0],
-        //     params[1],
-        //     params[2],
-        //     params[3],
-        //     params[4]
-        // );
         return abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
-            keccak256(
-                abi.encode(
-                    ERC20METATRANSACTION_TYPEHASH,
-                    addresses[0],
-                    addresses[1],
-                    addresses[2],
-                    amount,
-                    keccak256(data),
-                    params[0],
-                    params[1],
-                    params[2],
-                    params[3],
-                    params[4],
-                    0x0000000000000000000000000000000000000000
-                )
-            )
+            keccak256(messageBytes(addresses, amount, data, params))
+        );
+    }
+
+    function messageBytes(
+        address[4] memory addresses, // from, to, tokenContract, relayer
+        uint256 amount,
+        bytes memory data,
+        uint256[5] memory params
+    ) internal pure returns(bytes memory) {
+        return abi.encode(
+            ERC20METATRANSACTION_TYPEHASH,
+            addresses[0],
+            addresses[1],
+            addresses[2],
+            amount,
+            keccak256(data),
+            params[0],
+            params[1],
+            params[2],
+            params[3],
+            params[4],
+            addresses[3]
         );
     }
 
@@ -150,7 +151,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         address[4] memory addresses, // from, to, tokenContract, relayer
         uint256 amount,
         bytes memory data,
-        uint256[5] memory params, // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
+        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
         bytes memory signature,
         SignatureType signatureType
     ) internal view {
@@ -240,10 +241,14 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         ERC20 tokenContract,
         uint256 amount,
         bytes memory data,
-        uint256[5] memory params, // nonce, minGasPrice, txGas, baseGas, tokenGasPrice
+        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
         address tokenReceiver
     ) internal returns (bool success, bytes memory returnData) {
-        nonces[from] = params[0];
+        {
+            uint128 batchId = uint128(params[0] / 2**128);
+            uint128 nonce = uint128(params[0]);
+            nonces[from][batchId] = nonce;
+        }
 
         if (data.length == 0) {
             if(params[4] > 0) {
@@ -292,7 +297,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         emit MetaTx(from, params[0], success, returnData);
     }
 
-    function meta_nonce(address from) external view returns(uint256) {
-        return nonces[from];
+    function meta_nonce(address from, uint128 batchId) external view returns(uint128) {
+        return nonces[from][batchId];
     }
 }
