@@ -1,6 +1,7 @@
 <script>
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
+import relayer from '../stores/relayer';
 </script>
 
 <style>
@@ -84,9 +85,13 @@ import metatx from '../stores/metatx';
     {/if}
 {/if}
 
-<div id="myModal" class="modal" style="display:{($wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
+<div id="myModal" class="modal" style="display:{($relayer.status == 'Error' || $wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
     <!-- Modal content -->
-    {#if $metatx.status == 'error'}
+    {#if $relayer.status == 'Error'}
+        <div class="modal-content">
+        <p>Unfortunately the fund for the relayers run has run out. If you can help please fund that address : {$relayer.funderAddress} and reload</p>
+        </div>
+    {:else if $metatx.status == 'error'}
         <div class="modal-content">
         <span class="close" on:click="{() => $metatx.status = 'none'}">&times;</span>
         <p>{$metatx.message}</p>
@@ -105,3 +110,4 @@ import metatx from '../stores/metatx';
         </div>
     {/if}
 </div>
+

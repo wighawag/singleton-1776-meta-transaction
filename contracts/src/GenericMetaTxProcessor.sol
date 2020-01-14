@@ -42,6 +42,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
 
     // //////////////// STATE ///////////////////
     mapping(address => mapping(uint128 => uint128)) nonces;
+    bool lock = false;
     // //////////////////////////////////////////
 
     constructor() public {
@@ -74,6 +75,8 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         address tokenReceiver,
         SignatureType signatureType
     ) external returns (bool success, bytes memory returnData) {
+        require(!lock, "IN_PROGRESS");
+        lock = true;
         _ensureParametersValidity(addresses[0], params, addresses[3]);
         _ensureCorrectSigner(
             addresses,
@@ -83,8 +86,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             signature,
             signatureType
         );
-        return
-            _performERC20MetaTx(
+        (success, returnData) = _performERC20MetaTx(
                 addresses[0],
                 addresses[1],
                 ERC20(addresses[2]),
@@ -93,6 +95,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
                 params,
                 tokenReceiver
             );
+        lock = false;
     }
 
     // ////////////////////////////// INTERNALS /////////////////////////
@@ -263,7 +266,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
                     tokenReceiver
                 );
             } else {
-                require(tokenContract.transferFrom(from, to, amount), "failed transfer");
+                require(tokenContract.transferFrom(from, to, amount), "ERC20_TRANSFER_FAILED");
             }
             success = true;
         } else {
@@ -271,8 +274,10 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
                 BytesUtil.doFirstParamEqualsAddress(data, from),
                 "first param != from"
             );
+            uint256 previousBalance;
             if(amount > 0) {
-                tokenContract.transferFrom(from, address(this), amount);
+                previousBalance = tokenContract.balanceOf(address(this));
+                require(tokenContract.transferFrom(from, address(this), amount), "ERC20_ALLOCATION_FAILED");
                 tokenContract.approve(to, amount);
             }
             if(params[4] > 0) {
@@ -290,7 +295,10 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
                 (success, returnData) = _executeWithSpecificGas(to, params[2], data);
             }
             if(amount > 0) {
-                // TODO refund amount not spent
+                uint256 newBalance = tokenContract.balanceOf(address(this));
+                if (newBalance > previousBalance) {
+                    require(tokenContract.transfer(from, newBalance - previousBalance), "ERC20_REFUND_FAILED");
+                }
             }
         }
 

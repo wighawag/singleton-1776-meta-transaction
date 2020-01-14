@@ -28,8 +28,10 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
 
     uint256 internal _supplyClaimed;
     mapping(address => bool) internal _claimed; // TODO optimize it by storing it in the same slot as _balances
+    address /*immutable*/ _metaTxProcessor;
 
-    constructor(uint256 supply) public {
+    constructor(uint256 supply, address metaTxProcessor) public {
+        _metaTxProcessor = metaTxProcessor;
         _totalSupply = supply;
         DOMAIN_SEPARATOR = keccak256(abi.encode(
             keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
@@ -49,7 +51,7 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
 
     function _balanceOf(address owner) internal view returns (bool claimed, uint256 balance) {
         balance = _balances[owner];
-        if (balance == 0 && !_claimed[owner] && _supplyClaimed < _totalSupply) { // TODO set claimed once balance is set
+        if (!_claimed[owner] && _supplyClaimed < _totalSupply) {
             claimed = false;
             balance = _totalSupply - _supplyClaimed;
             if (balance > 10000000000000000000) {
@@ -58,17 +60,6 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
         } else {
             claimed = true;
         }
-    }
-
-    function testBalanceOf(address owner) internal view returns (uint256) {
-        uint256 balance = _balances[owner];
-        if (balance == 0 && !_claimed[owner] && _supplyClaimed < _totalSupply) { // TODO set claimed once balance is set
-            balance = _totalSupply - _supplyClaimed;
-            if (balance > 10000000000000000000) {
-                balance = 10000000000000000000;
-            }
-        }
-        return balance;
     }
 
     /// @notice Gets the balance of `owner`.
@@ -118,7 +109,7 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
         public
         returns (bool success)
     {
-        if (msg.sender != from) {
+        if (msg.sender != from && msg.sender != _metaTxProcessor) {
             uint256 currentAllowance = _allowances[from][msg.sender];
             if (currentAllowance != (2**256) - 1) {
                 // save gas when allowance is maximal by not reducing it (see https://github.com/ethereum/EIPs/issues/717)
@@ -197,7 +188,13 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
             _claimed[from] = true; // TODO use bit in _balances to reuse same slot
         }
         _balances[from] = currentBalance - amount;
-        _balances[to] += amount;
+
+        (claimed, currentBalance) = _balanceOf(to);
+        if (!claimed) {
+            _supplyClaimed += currentBalance;
+            _claimed[to] = true; // TODO use bit in _balances to reuse same slot
+        }
+        _balances[to] = currentBalance + amount;
         emit Transfer(from, to, amount);
     }
 

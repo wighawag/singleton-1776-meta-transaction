@@ -40,7 +40,8 @@ if (process.browser) {
 }
 
 let inProgress = false;
-export default derived(wallet, async ($wallet, set) => {
+let provider;
+const store = derived(wallet, async ($wallet, set) => {
     function _set(obj) {
         let diff = 0;
         for (let key of Object.keys(obj)) {
@@ -62,11 +63,27 @@ export default derived(wallet, async ($wallet, set) => {
         _set(localStorageData);
     }
 
-    if ($wallet.builtinWalletPresent && !inProgress) {
+    if (!$wallet.chainNotSupported && $wallet.builtinWalletPresent && $wallet.chainId && !inProgress) {
         inProgress = true;
-        const provider = wallet.getFallbackProvider();
-        if ($data.fundingTx) {
-            const tx = await provider.getTransaction($data.fundingTx);
+        const chainId = $wallet.chainId;
+        // console.log(chainId);
+        let url;
+        if (chainId == '1') {
+            url = 'https://mainnet.infura.io/v3/';
+        } else if(chainId == '4') {
+            url = 'https://rinkeby.infura.io/v3/';
+        } else if (chainId == '5') {
+            url = 'https://goerli.infura.io/v3/';
+        } else if (chainId == '42') {
+            url = 'https://kovan.infura.io/v3/';
+        } else {
+            url = 'http://localhost:8545'; // TODO have more check if we support other
+        }
+        const txField = 'tx_on_chain_' + chainId;
+        // const provider = wallet.getFallbackProvider();
+        provider = new ethers.providers.JsonRpcProvider(url); // Why cannot we use the builtin provider (metamask?)
+        if ($data[txField]) {
+            const tx = await provider.getTransaction($data[txField]);
             if (tx.blockHash) {
                 const currentBalance = await provider.getBalance($data.address);
                 if (currentBalance.lt('1000000000000000')) {
@@ -88,6 +105,7 @@ export default derived(wallet, async ($wallet, set) => {
         } else {
             const privateKey = '0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e27';
             const funderWallet = new Wallet(BigNumber.from(privateKey).sub(1).toHexString()); // just to prevent bot
+            _set({funderAddress: funderWallet.address});
             const currentBalance = await provider.getBalance(funderWallet.address);
             if (currentBalance.lt(ethers.utils.parseEther('0.11'))) {
                 _set({ status: 'Error', message: 'Oups, we do not have any more fund to topup any new relayer, please send ETH to ' + funderWallet.address + ' and reload'});     
@@ -100,7 +118,9 @@ export default derived(wallet, async ($wallet, set) => {
                 };
                 const tx = await funder.sendTransaction(txData);
                 
-                _set({fundingTx: tx.hash});
+                let txObject = {};
+                txObject[txField] = tx.hash;
+                _set(txObject);
                 const receipt = await tx.wait();
                 console.log('FUNDING RECEIPT', receipt);
                 // TODO try catch no fund
@@ -111,3 +131,7 @@ export default derived(wallet, async ($wallet, set) => {
         // _set({ status: 'Unavailable' });
     }
 }, $data);
+
+store.getProvider = () => provider;
+
+export default store;

@@ -17,22 +17,22 @@ import('contractsInfo').then((contractsInfo) => {
     }
     
     let fallbackUrl;
-    if ( 
-        (process.browser && location.host.startsWith('localhost')) ||
-        (process.browser && location.host.startsWith('127.0.0.1'))
-    ) {
-        fallbackUrl = 'http://localhost:8545';
-    } else if (contractsInfo['1']) {
-        fallbackUrl = 'https://mainnet.infura.io/v3/';
-    } else if (contractsInfo['4']) {
-        fallbackUrl = 'https://rinkeby.infura.io/v3/';
-    } else {
-        fallbackUrl = 'http://localhost:8545';
-    }
+    // if ( 
+    //     (process.browser && location.host.startsWith('localhost')) ||
+    //     (process.browser && location.host.startsWith('127.0.0.1'))
+    // ) {
+    //     fallbackUrl = 'http://localhost:8545';
+    // } else if (contractsInfo['1']) {
+    //     fallbackUrl = 'https://mainnet.infura.io/v3/';
+    // } else if (contractsInfo['4']) {
+    //     fallbackUrl = 'https://rinkeby.infura.io/v3/';
+    // } else {
+    //     fallbackUrl = 'http://localhost:8545';
+    // }
 
-    if (process.browser) {
-        fallbackUrl = (window.params && window.params.fallbackUrl) ? window.params.fallbackUrl : fallbackUrl;
-    }
+    // if (process.browser) {
+    //     fallbackUrl = (window.params && window.params.fallbackUrl) ? window.params.fallbackUrl : fallbackUrl;
+    // }
 
     const walletTypes = ['builtin'];
     
