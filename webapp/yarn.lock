@@ -3503,10 +3503,10 @@ svelte-loader@^2.9.0:
     loader-utils "^1.1.0"
     svelte-dev-helper "^1.1.9"
 
-svelte-wallet@^0.1.8:
-  version "0.1.8"
-  resolved "https://registry.yarnpkg.com/svelte-wallet/-/svelte-wallet-0.1.8.tgz#8b6d5d2b8c6ceb0f527018fda5f21392e4d26d17"
-  integrity sha512-gT/w+SmaD2p8RPNQuTN1SdFILPfodlW9KBewx7xh8FGQodxk2mkLLIdNAGe8p9Egcbxnw+jw/vzylF32lSgaNg==
+svelte-wallet@^0.1.9:
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/svelte-wallet/-/svelte-wallet-0.1.9.tgz#8022e047f3f3ed53e3bbc80b7325bcd7a06201e1"
+  integrity sha512-pt7oOnWOKF8ucGlfoT7gUterd8PbaYdM2LBYxrkOhd58/lKlsA3d96bMbR82OLOZGcWa5DvfcoDSrALqpk7kVA==
   dependencies:
     ethers "^5.0.0-beta.158"
 

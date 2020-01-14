@@ -1,6 +1,7 @@
 <script>
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
+import relayer from '../stores/relayer';
 import WalletWrapper from '../components/WalletWrapper';
 import account from '../stores/account';
 import * as ethers from 'ethers';
@@ -84,11 +85,33 @@ async function transferFirstNumber() {
 	message
 	});
 	
-	const response = await wallet.sign(msgParams);
+	let response;
+	try {
+		response = await wallet.sign(msgParams);
+	} catch(e) {
+		$metatx = {status: 'error', message: 'signature rejected'};
+		return false;
+	}
+	if (!response) {
+		$metatx = {status: 'error', message: 'signature rejected, no response'};
+		return false;
+	}
+	$metatx = {status: 'submitting'};
+	await pause(0.4);
 
 	const provider = wallet.getFallbackProvider();
-	const relayer = new Wallet('0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e26').connect(provider);
-	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayer);
+	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
+	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
+	
+	$metatx = {status: 'waitingRelayer'};
+	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
+		await pause(1);
+	}
+	if ($relayer.status == 'Error') {
+		$metatx = {status: 'error', message: $relayer.message};
+		return false;
+	}
+	// await pause(0.4);
 
 	const tx = await metaTxProcessor.executeERC20MetaTx(
 		[
@@ -107,11 +130,13 @@ async function transferFirstNumber() {
 			message.tokenGasPrice
 		],
 		response,
-		relayer.address,
+		relayerWallet.address,
 		0,
 		{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
 	);
-	console.log(tx);
+
+	$metatx = {status: 'txBroadcasted'};
+	await pause(0.4);
 	const receipt = await tx.wait();
 	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	// console.log(ethers.utils.defaultAbiCoder.decode(['Error(srtring)'],events[0].values[3]));
@@ -120,6 +145,7 @@ async function transferFirstNumber() {
 		console.log(errorToAscii(events[0].values[3]));
 	}
 	console.log(receipt);
+	$metatx = {status: 'none'};
 	return receipt;
 }
 
@@ -169,15 +195,33 @@ async function purchaseNumber() {
 	message
 	});
 	
-	const response = await wallet.sign(msgParams);
+	let response;
+	try {
+		response = await wallet.sign(msgParams);
+	} catch(e) {
+		$metatx = {status: 'error', message: 'signature rejected'};
+		return false;
+	}
+	if (!response) {
+		$metatx = {status: 'error', message: 'signature rejected, no response'};
+		return false;
+	}
+	
 	$metatx = {status: 'submitting'};
 	await pause(0.4);
 	const provider = wallet.getFallbackProvider();
-	const relayer = new Wallet('0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e26').connect(provider);
-	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayer);
+	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
+	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
 
 	$metatx = {status: 'waitingRelayer'};
-	await pause(0.4);
+	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
+		await pause(1);
+	}
+	if ($relayer.status == 'Error') {
+		$metatx = {status: 'error', message: $relayer.message};
+		return false;
+	}
+	// await pause(0.4);
 	let tx 
 	try {
 		tx = await metaTxProcessor.executeERC20MetaTx(
@@ -197,13 +241,13 @@ async function purchaseNumber() {
 				message.tokenGasPrice
 			],
 			response,
-			relayer.address,
+			relayerWallet.address,
 			0,
 			{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
 		);
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error'}; // TODO no balance ?
+		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
 		return false;
 	}
 	
@@ -247,12 +291,35 @@ async function permitDAI() {
 	  allowed: true
 	}});
 	
-	const response = await wallet.sign(msgParams);
+	let response;
+	try {
+		response = await wallet.sign(msgParams);
+	} catch(e) {
+		$metatx = {status: 'error', message: 'signature rejected'};
+		return false;
+	}
+	if (!response) {
+		$metatx = {status: 'error', message: 'signature rejected, no response'};
+		return false;
+	}
+	$metatx = {status: 'submitting'};
+	await pause(0.4);
+
 	const splitSig = ethers.utils.splitSignature(response);
 
 	const provider = wallet.getFallbackProvider();
-	const relayer = new Wallet('0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e26').connect(provider);
-	const DAI = new Contract(dai.address, dai.abi, relayer);
+	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
+	const DAI = new Contract(dai.address, dai.abi, relayerWallet);
+
+	$metatx = {status: 'waitingRelayer'};
+	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
+		await pause(1);
+	}
+	if ($relayer.status == 'Error') {
+		$metatx = {status: 'error', message: $relayer.message};
+		return false;
+	}
+	// await pause(0.4);
 
 	const tx = await DAI.permit(
 		$wallet.address,
@@ -265,9 +332,12 @@ async function permitDAI() {
 		splitSig.s,
 		{gasLimit: BigNumber.from('1000000'), chainId: 1} // chainId = 1 is required for ganache
 	);
-	console.log(tx);
+
+	$metatx = {status: 'txBroadcasted'};
+	await pause(0.4);
 	const receipt = await tx.wait();
 	console.log(receipt);
+	$metatx = {status: 'none'};
 	return receipt;
 }
 </script>

@@ -27,6 +27,21 @@ import metatx from '../stores/metatx';
   border: 1px solid #888;
   width: 80%; /* Could be more or less, depending on screen size */
 }
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
 </style>
 
 {#if $wallet.status == 'Loading'}
@@ -71,15 +86,22 @@ import metatx from '../stores/metatx';
 
 <div id="myModal" class="modal" style="display:{($wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
     <!-- Modal content -->
-    <div class="modal-content">
-        {#if $metatx.status == 'submitting'}
-        <p>submiting to relayer...</p>
-        {:else if $metatx.status == 'waitingRelayer'}
-        <p>waiting for relayer...</p>
-        {:else if $metatx.status == 'txBroadcasted'}
-        <p>waiting for relay tx to be mined...</p>
-        {:else}
-        <p>Please accept signature</p>
-        {/if}
-    </div>
+    {#if $metatx.status == 'error'}
+        <div class="modal-content">
+        <span class="close" on:click="{() => $metatx.status = 'none'}">&times;</span>
+        <p>{$metatx.message}</p>
+        </div>
+    {:else}
+        <div class="modal-content">
+            {#if $metatx.status == 'submitting'}
+            <p>submiting to relayer...</p>
+            {:else if $metatx.status == 'waitingRelayer'}
+            <p>waiting for relayer...</p>
+            {:else if $metatx.status == 'txBroadcasted'}
+            <p>waiting for relay tx to be mined...</p>
+            {:else}
+            <p>Please accept signature</p>
+            {/if}
+        </div>
+    {/if}
 </div>
