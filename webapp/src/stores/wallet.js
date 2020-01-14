@@ -10,11 +10,6 @@ export const contractData = {};
 
 import('contractsInfo').then((contractsInfo) => {
     let supportedChainIds = Object.keys(contractsInfo);
-
-    const rinkebyIndex = supportedChainIds.indexOf('4');
-    if (rinkebyIndex >= 0) {
-        supportedChainIds.splice(rinkebyIndex, 1);
-    }
     
     let fallbackUrl;
     // if ( 
