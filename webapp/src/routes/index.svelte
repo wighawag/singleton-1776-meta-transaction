@@ -59,14 +59,14 @@ async function getEventsFromReceipt(ethersProvider, ethersContract, sig, receipt
 
 async function transferFirstNumber() {
 	const nftAddress = wallet.getContract('Numbers').address;
-	const daiAddress = wallet.getContract('DAI').address;
+	const MTXAddress = wallet.getContract('MTX').address;
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 
 	if (!ethers.utils.isAddress(transferTo)) {
 		$metatx = {status: 'error', message: 'Please specify a valid address'};
 		return false;
-	} 
+	}
 
 	const txData = await wallet.computeData('Numbers', 'transferFrom', $wallet.address, transferTo, $account.numbers[0]);
 	const nonce = transfer_nonce ? BigNumber.from(transfer_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, transfer_batchId);
@@ -74,7 +74,7 @@ async function transferFirstNumber() {
 	const message = {
       from: $wallet.address,
 	  to: nftAddress,
-	  tokenContract: daiAddress,
+	  tokenContract: mtxAddress,
 	  amount: BigNumber.from(transfer_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
 	  batchNonce: BigNumber.from(transfer_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
@@ -128,6 +128,12 @@ async function transferFirstNumber() {
 	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
 	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
 	
+	const currentBalance = await provider.getBalance(relayerWallet.address);
+	if (currentBalance.lt('1000000000000000')) {
+		$metatx = {status: 'error', message: 'relayer balance too low, please send ETH to ' + relayerWallet.address};
+		return false;     
+	}
+
 	$metatx = {status: 'waitingRelayer'};
 	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
 		await pause(1);
@@ -184,7 +190,7 @@ async function transferFirstNumber() {
 		);
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		$metatx = {status: 'error', message: 'relayer tx failed'};
 		return false;
 	}
 
@@ -203,17 +209,17 @@ async function transferFirstNumber() {
 }
 
 async function purchaseNumber() {
-	const saleAddress = wallet.getContract('NumberSale').address;
-	const daiAddress = wallet.getContract('DAI').address;
+	const saleAddress = wallet.getContract('MTXNumberSale').address;
+	const mtxAddress = wallet.getContract('MTX').address;
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
-	const txData = await wallet.computeData('NumberSale', 'purchase', $wallet.address, $wallet.address);
+	const txData = await wallet.computeData('MTXNumberSale', 'purchase', $wallet.address, $wallet.address);
 	const nonce = purchase_nonce ? BigNumber.from(purchase_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, purchase_batchId);
 
 	const message = {
       from: $wallet.address,
 	  to: saleAddress,
-	  tokenContract: daiAddress,
+	  tokenContract: mtxAddress,
 	  amount: BigNumber.from(purchase_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
 	  batchNonce: BigNumber.from(purchase_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
@@ -266,6 +272,12 @@ async function purchaseNumber() {
 	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
 	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
 
+	const currentBalance = await provider.getBalance(relayerWallet.address);
+	if (currentBalance.lt('1000000000000000')) {
+		$metatx = {status: 'error', message: 'relayer balance too low, please send ETH to ' + relayerWallet.address};
+		return false;     
+	}
+
 	$metatx = {status: 'waitingRelayer'};
 	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
 		await pause(1);
@@ -313,84 +325,6 @@ async function purchaseNumber() {
 		$metatx = {status: 'error', message: 'MetaTx Mined but Error: ' + errorString};
 		return false;
 	}
-	console.log(receipt);
-	$metatx = {status: 'none'};
-	return receipt;
-}
-
-async function permitDAI() {
-	const dai = wallet.getContract('DAI');
-	const metaTxProcessorAddress = wallet.getContract('GenericMetaTxProcessor').address;
-	const msgParams = JSON.stringify({types:{
-      EIP712Domain:[
-        {name:"name",type:"string"},
-		{name:"version",type:"string"},
-		// {name:"chainId",type:"uint256"},
-        {name:"verifyingContract",type:"address"}
-      ],
-      Permit:[
-		{name:"holder",type:"address"},
-		{name:"spender",type:"address"},
-		{name:"nonce",type:"uint256"},
-		{name:"expiry",type:"uint256"},
-		{name:"allowed",type:"bool"}
-      ],
-    },
-    primaryType:"Permit",
-    domain:{name:"Dai Stablecoin",version:"1",verifyingContract: dai.address},
-    message:{
-      holder: $wallet.address,
-	  spender: metaTxProcessorAddress,
-	  nonce: 0, // TODO
-	  expiry: 0,
-	  allowed: true
-	}});
-	
-	let response;
-	try {
-		response = await wallet.sign(msgParams);
-	} catch(e) {
-		$metatx = {status: 'error', message: 'signature rejected'};
-		return false;
-	}
-	if (!response) {
-		$metatx = {status: 'error', message: 'signature rejected, no response'};
-		return false;
-	}
-	$metatx = {status: 'submitting'};
-	await pause(0.4);
-
-	const splitSig = ethers.utils.splitSignature(response);
-
-	const provider = relayer.getProvider();
-	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
-	const DAI = new Contract(dai.address, dai.abi, relayerWallet);
-
-	$metatx = {status: 'waitingRelayer'};
-	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
-		await pause(1);
-	}
-	if ($relayer.status == 'Error') {
-		$metatx = {status: 'error', message: $relayer.message};
-		return false;
-	}
-	// await pause(0.4);
-
-	const tx = await DAI.permit(
-		$wallet.address,
-		metaTxProcessorAddress,
-		0,
-		0,
-		true,
-		splitSig.v,
-		splitSig.r,
-		splitSig.s,
-		{gasLimit: BigNumber.from('1000000'), chainId: 1} // chainId = 1 is required for ganache
-	);
-
-	$metatx = {status: 'txBroadcasted'};
-	await pause(0.4);
-	const receipt = await tx.wait();
 	console.log(receipt);
 	$metatx = {status: 'none'};
 	return receipt;
@@ -454,15 +388,15 @@ async function permitDAI() {
 	<hr/>
 	{:else if $account.status == 'Loaded'}
 		<hr/>
-		<p>Your DAI Balance:</p>
+		<p>MTX is a token that support our MetaTx standard and can thus be used without any extra step. You can even start interacting with contracts that support the standard and they can even charge tokens (no pre-approval required!).</p>
+		<p>Your MTX Balance:</p>
 		<hr/>
-		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
+		<h3 class="center">{$account.mtxBalance.div('1000000000000000000')}</h3>
 		<hr/>
-		{#if $account.hasApprovedMetaTxProcessorForDAI}
-		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
+		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 MTX</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
-			<label>DAI amount</label><input type="number" bind:value={purchase_amount}/><br/>
+			<label>MTX amount</label><input type="number" bind:value={purchase_amount}/><br/>
 			<label>expiry</label><input type="datetime" bind:value={purchase_expiry}/><br/>
 			<label>txGas</label><input type="number" bind:value={purchase_txGas}/><br/>
 			<label>batchId</label><input type="number" bind:value={purchase_batchId}/><br/>
@@ -470,10 +404,6 @@ async function permitDAI() {
 			<label>tokenGasPrice</label><input type="number" bind:value={purchase_tokenGasPrice}/><br/>
 			<label>relayer</label><input type="string" bind:value={purchase_relayer}/><br/>
 		</details>
-		{:else}
-		<p>In order to purchase the Numbers NFT you first need to approve the MetaTx Processor to transfer DAI on your behalf.</p>
-		<p><button on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
-		{/if}
 		<br/>
 		<br/>
 		<hr/>
@@ -493,7 +423,7 @@ async function permitDAI() {
 		<p><button on:click="{() => transferFirstNumber()}">transfer</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
-			<label>DAI amount</label><input type="number" bind:value={transfer_amount}/><br/>
+			<label>MTX amount</label><input type="number" bind:value={transfer_amount}/><br/>
 			<label>expiry</label><input type="datetime" bind:value={transfer_expiry}/><br/>
 			<label>txGas</label><input type="number" bind:value={transfer_txGas}/><br/>
 			<label>batchId</label><input type="number" bind:value={transfer_batchId}/><br/>

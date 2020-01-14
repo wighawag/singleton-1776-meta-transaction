@@ -50,7 +50,7 @@
 
 <nav>
 	<ul>
-		<li><a class:selected='{segment === undefined}' href='.'>Home</a></li>
+		<li><a class:selected='{segment === undefined}' href='.'>MTX</a></li>
 		<li><a class:selected='{segment === "dai"}' href='dai'>With DAI</a></li>
 		<!-- <li><a class:selected='{segment === "relayer"}' href='relayer'>relayer</a></li> -->
 

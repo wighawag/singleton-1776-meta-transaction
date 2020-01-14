@@ -38,10 +38,13 @@ export default derived(wallet, ($wallet, set) => {
             items.push(id);
         }
 
+        const mtxBalance = await wallet.call('MTX', 'balanceOf', $wallet.address);
+
         // const balance = await wallet.call('DAI', 'balanceOf', $wallet.address);
         _set({
             status: 'Loaded',
             daiBalance: balance,
+            mtxBalance,
             hasApprovedMetaTxProcessorForDAI,
             numbers: items
             // TODO block,

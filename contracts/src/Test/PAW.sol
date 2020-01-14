@@ -28,7 +28,7 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
 
     uint256 internal _supplyClaimed;
     mapping(address => bool) internal _claimed; // TODO optimize it by storing it in the same slot as _balances
-    address /*immutable*/ _metaTxProcessor;
+    address internal /*immutable*/ _metaTxProcessor;
 
     constructor(uint256 supply, address metaTxProcessor) public {
         _metaTxProcessor = metaTxProcessor;
@@ -79,6 +79,9 @@ contract PAW /*is ERC20*/{ // interface seems to require overrides :(
         view
         returns (uint256 remaining)
     {
+        if(spender != address(0) && spender == _metaTxProcessor) {
+            return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        }
         return _allowances[owner][spender];
     }
 

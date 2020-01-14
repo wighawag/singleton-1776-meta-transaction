@@ -128,6 +128,12 @@ async function transferFirstNumber() {
 	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
 	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
 	
+	const currentBalance = await provider.getBalance(relayerWallet.address);
+	if (currentBalance.lt('1000000000000000')) {
+		$metatx = {status: 'error', message: 'relayer balance too low, please send ETH to ' + relayerWallet.address};
+		return false;     
+	}
+
 	$metatx = {status: 'waitingRelayer'};
 	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
 		await pause(1);
@@ -266,6 +272,12 @@ async function purchaseNumber() {
 	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
 	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayerWallet);
 
+	const currentBalance = await provider.getBalance(relayerWallet.address);
+	if (currentBalance.lt('1000000000000000')) {
+		$metatx = {status: 'error', message: 'relayer balance too low, please send ETH to ' + relayerWallet.address};
+		return false;     
+	}
+
 	$metatx = {status: 'waitingRelayer'};
 	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
 		await pause(1);
@@ -366,6 +378,12 @@ async function permitDAI() {
 	const relayerWallet = new Wallet($relayer.privateKey).connect(provider);
 	const DAI = new Contract(dai.address, dai.abi, relayerWallet);
 
+	const currentBalance = await provider.getBalance(relayerWallet.address);
+	if (currentBalance.lt('1000000000000000')) {
+		$metatx = {status: 'error', message: 'relayer balance too low, please send ETH to ' + relayerWallet.address};
+		return false;     
+	}
+
 	$metatx = {status: 'waitingRelayer'};
 	while($relayer.status != 'Loaded' && $relayer.status != 'Error') {
 		await pause(1);
@@ -453,12 +471,14 @@ async function permitDAI() {
     <span> fetching account info </span>
 	<hr/>
 	{:else if $account.status == 'Loaded'}
+		
+		{#if $account.hasApprovedMetaTxProcessorForDAI}
 		<hr/>
+		<p>Congrats, you already authorized our singleton metatx processor to handle DAI</p>
 		<p>Your DAI Balance:</p>
 		<hr/>
 		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
 		<hr/>
-		{#if $account.hasApprovedMetaTxProcessorForDAI}
 		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
@@ -471,7 +491,12 @@ async function permitDAI() {
 			<label>relayer</label><input type="string" bind:value={purchase_relayer}/><br/>
 		</details>
 		{:else}
-		<p>In order to purchase the Numbers NFT you first need to approve the MetaTx Processor to transfer DAI on your behalf.</p>
+		<hr/>
+		<p>Your DAI Balance:</p>
+		<hr/>
+		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
+		<p>Since DAI was created before such proposal, you would need to first approve your token to be used by the meta transaction processor.
+		Fortunately, DAI allow us to do that with a simple signature</p>
 		<p><button on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
 		{/if}
 		<br/>
