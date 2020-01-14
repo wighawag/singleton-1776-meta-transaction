@@ -5,8 +5,9 @@
   "scripts": {
     "dev-prod-contracts": "cross-env PROD_CONTRACT=true sapper dev",
     "dev": "sapper dev",
-    "build": "sapper build",
-    "export": "sapper export",
+    "build": "cross-env NODE_ENV=production sapper build",
+    "export": "cross-env NODE_ENV=production sapper export --relative-basepath",
+    "serve-export": "sirv __sapper__/export",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
     "cy:open": "cypress open",
@@ -19,11 +20,12 @@
     "polka": "next",
     "rocketh": "^0.4.24",
     "sirv": "^0.4.0",
+    "sirv-cli": "^0.4.5",
     "svelte-wallet": "^0.1.10"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",
-    "sapper": "^0.27.0",
+    "sapper": "git://github.com/wighawag/sapper.git#relative_baseUrl",
     "svelte": "^3.0.0",
     "svelte-loader": "^2.9.0",
     "webpack": "^4.7.0"
