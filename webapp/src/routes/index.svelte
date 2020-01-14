@@ -186,7 +186,7 @@ async function transferFirstNumber() {
 			response,
 			relayerWallet.address,
 			0,
-			{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
+			{gasLimit: BigNumber.from('2000000'), chainId: relayer.getChainIdToUse()}
 		);
 	} catch(e) {
 		// TODO error
@@ -196,7 +196,14 @@ async function transferFirstNumber() {
 
 	$metatx = {status: 'txBroadcasted'};
 	await pause(0.4);
-	const receipt = await tx.wait();
+	let receipt;
+	try {
+		receipt = await tx.wait();
+	} catch(e) {
+		// TODO error
+		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		return false;
+	}
 	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	// console.log(ethers.utils.defaultAbiCoder.decode(['Error(srtring)'],events[0].values[3]));
 	// console.log(ethers.utils.toUtf8String(events[0].values[3]));
@@ -204,6 +211,9 @@ async function transferFirstNumber() {
 		console.log(errorToAscii(events[0].values[3]));
 	}
 	console.log(receipt);
+	while($account.blockNumber < receipt.blockNumber) {
+		await pause(0.5);
+	}
 	$metatx = {status: 'none'};
 	return receipt;
 }
@@ -308,7 +318,7 @@ async function purchaseNumber() {
 			response,
 			relayerWallet.address,
 			0,
-			{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
+			{gasLimit: BigNumber.from('2000000'), chainId: relayer.getChainIdToUse()}
 		);
 	} catch(e) {
 		// TODO error
@@ -318,7 +328,14 @@ async function purchaseNumber() {
 	
 	$metatx = {status: 'txBroadcasted'};
 	await pause(0.4);
-	const receipt = await tx.wait();
+	let receipt;
+	try {
+		receipt = await tx.wait();
+	} catch(e) {
+		// TODO error
+		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		return false;
+	}
 	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	if(!events[0].values[2]) {
 		const errorString = errorToAscii(events[0].values[3]);
@@ -326,6 +343,9 @@ async function purchaseNumber() {
 		return false;
 	}
 	console.log(receipt);
+	while($account.blockNumber < receipt.blockNumber) {
+		await pause(0.5);
+	}
 	$metatx = {status: 'none'};
 	return receipt;
 }

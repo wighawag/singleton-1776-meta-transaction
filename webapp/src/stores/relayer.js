@@ -41,6 +41,7 @@ if (process.browser) {
 
 let inProgress = false;
 let provider;
+let chainIdToUse;
 const store = derived(wallet, async ($wallet, set) => {
     function _set(obj) {
         let diff = 0;
@@ -66,18 +67,20 @@ const store = derived(wallet, async ($wallet, set) => {
     if (!$wallet.chainNotSupported && $wallet.builtinWalletPresent && $wallet.chainId && !inProgress) {
         inProgress = true;
         const chainId = $wallet.chainId;
+        chainIdToUse = chainId;
         // console.log(chainId);
         let url;
         if (chainId == '1') {
-            url = 'https://mainnet.infura.io/v3/';
+            url = 'https://mainnet.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4';
         } else if(chainId == '4') {
-            url = 'https://rinkeby.infura.io/v3/';
+            url = 'https://rinkeby.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4';
         } else if (chainId == '5') {
-            url = 'https://goerli.infura.io/v3/';
+            url = 'https://goerli.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4';
         } else if (chainId == '42') {
-            url = 'https://kovan.infura.io/v3/';
+            url = 'https://kovan.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4';
         } else {
             url = 'http://localhost:8545'; // TODO have more check if we support other
+            chainIdToUse = 1; // TODO ganache config ?
         }
         const txField = 'tx_on_chain_' + chainId;
         // const provider = wallet.getFallbackProvider();
@@ -114,7 +117,7 @@ const store = derived(wallet, async ($wallet, set) => {
                 let txData = {
                     to: $data.address,
                     value: ethers.utils.parseEther('0.1'),
-                    chainId: 1 // TODO
+                    chainId: parseInt(chainIdToUse) // TODO
                 };
                 const tx = await funder.sendTransaction(txData);
                 
@@ -133,5 +136,6 @@ const store = derived(wallet, async ($wallet, set) => {
 }, $data);
 
 store.getProvider = () => provider;
+store.getChainIdToUse = () => parseInt(chainIdToUse);
 
 export default store;

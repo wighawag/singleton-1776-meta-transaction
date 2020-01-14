@@ -9,7 +9,12 @@ if (typeof window !== 'undefined') {
 export const contractData = {};
 
 import('contractsInfo').then((contractsInfo) => {
-    let supportedChainIds = Object.keys(contractsInfo);
+    const supportedChainIds = [];
+    for(let chainId of Object.keys(contractsInfo)) {
+        if (chainId != 'default') {
+            supportedChainIds.push(chainId);
+        }
+    }
     
     let fallbackUrl;
     // if ( 

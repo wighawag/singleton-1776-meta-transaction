@@ -40,13 +40,16 @@ export default derived(wallet, ($wallet, set) => {
 
         const mtxBalance = await wallet.call('MTX', 'balanceOf', $wallet.address);
 
+        const blockNumber = await wallet.getProvider().getBlockNumber();
+
         // const balance = await wallet.call('DAI', 'balanceOf', $wallet.address);
         _set({
             status: 'Loaded',
             daiBalance: balance,
             mtxBalance,
             hasApprovedMetaTxProcessorForDAI,
-            numbers: items
+            numbers: items,
+            blockNumber
             // TODO block,
         });
     }
@@ -74,7 +77,7 @@ export default derived(wallet, ($wallet, set) => {
         interval = undefined;
     }
 
-    if ($wallet.status === 'Ready') {
+    if ($wallet.status === 'Ready' && !$wallet.chainNotSupported) {
         startListening();
     } else {
         // console.log('not ready now');

@@ -69,7 +69,12 @@ import relayer from '../stores/relayer';
     <button on:click="{() => wallet.retry()}">Retry</button>
 {:else if $wallet.status == 'Ready'}
     {#if $wallet.chainNotSupported}
-        <h3> Please change your network </h3>
+        <h3> Please change your network to either</h3>
+        <ul>
+        {#each $wallet.supportedChainIds as chainId}
+        <li>{chainId}</li>
+        {/each}
+        </ul>
         {#if $wallet.requireManualChainReload }
             <h5 class="errorMessage">You might need to reload the page after switching to the new chain</h5>
             <button on:click="{() => wallet.reloadPage()}">Reload</button>
@@ -85,9 +90,9 @@ import relayer from '../stores/relayer';
     {/if}
 {/if}
 
-<div id="myModal" class="modal" style="display:{($relayer.status == 'Error' || $wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
+<div id="myModal" class="modal" style="display:{((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
     <!-- Modal content -->
-    {#if $relayer.status == 'Error'}
+    {#if !$wallet.chainNotSupported && $relayer.status == 'Error'}
         <div class="modal-content">
         <p>Unfortunately the fund for the relayers run has run out. If you can help please fund that address : {$relayer.funderAddress} and reload</p>
         </div>
