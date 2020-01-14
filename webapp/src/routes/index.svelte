@@ -9,7 +9,25 @@ import {pause} from '../utils/time'
 
 const { Wallet, Contract, BigNumber, AbiCoder } = ethers;
 
+let purchase_amount = 1;
+let purchase_expiry = 1610600198;
+let purchase_txGas = 1000000;
+let purchase_batchId = 0;
+let purchase_nonce = undefined;
+let purchase_tokenGasPrice = 0;
+let purchase_relayer = "0x0000000000000000000000000000000000000000";
+
+let transfer_amount = 0;
+let transfer_expiry = 1610600198;
+let transfer_txGas = 1000000;
+let transfer_batchId = 0;
+let transfer_nonce = undefined;
+let transfer_tokenGasPrice = 0;
+let transfer_relayer = "0x0000000000000000000000000000000000000000";
+
+
 let transferTo;
+
 
 async function relay() {
 
@@ -44,22 +62,29 @@ async function transferFirstNumber() {
 	const daiAddress = wallet.getContract('DAI').address;
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
+
+	if (!ethers.utils.isAddress(transferTo)) {
+		$metatx = {status: 'error', message: 'Please specify a valid address'};
+		return false;
+	} 
+
 	const txData = await wallet.computeData('Numbers', 'transferFrom', $wallet.address, transferTo, $account.numbers[0]);
-	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, 0);
+	const nonce = transfer_nonce ? BigNumber.from(transfer_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, transfer_batchId);
 
 	const message = {
       from: $wallet.address,
 	  to: nftAddress,
 	  tokenContract: daiAddress,
-	  amount: 0,
+	  amount: BigNumber.from(transfer_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
-	  batchNonce: nonce.toNumber() + 1,
-	  expiry: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	  txGas: 1000000,
+	  batchNonce: BigNumber.from(transfer_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
+	  expiry: transfer_expiry,
+	  txGas: transfer_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: 0,
-	  relayer: "0x0000000000000000000000000000000000000000",
+	  tokenGasPrice: transfer_tokenGasPrice,
+	  relayer: transfer_relayer,
 	}
+
 	const msgParams = JSON.stringify({types:{
       EIP712Domain:[
         {name:"name",type:"string"},
@@ -113,27 +138,55 @@ async function transferFirstNumber() {
 	}
 	// await pause(0.4);
 
-	const tx = await metaTxProcessor.executeERC20MetaTx(
-		[
-			message.from,
-			message.to,
-			message.tokenContract,
-			message.relayer,
-		],
-		message.amount,
-		message.data,
-		[
-			message.batchNonce,
-			message.expiry,
-			message.txGas,
-			message.baseGas,
-			message.tokenGasPrice
-		],
-		response,
-		relayerWallet.address,
-		0,
-		{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
-	);
+	if (message.relayer.toLowerCase() != '0x0000000000000000000000000000000000000000' && message.relayer.toLowerCase() != $relayer.address.toLowerCase()) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the message is destined to another relayer'};
+		return false;
+	} 
+
+	if(message.expiry <  Date.now() /1000 ) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the expiry time is in the past'};
+		return false;
+	}else if(message.expiry <  Date.now() / 1000 - 60) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the expiry time is too short'};
+		return false;
+	}
+
+	const actualMetaNonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, transfer_batchId);
+	const expectedBatchNonce = BigNumber.from(transfer_batchId).mul(BigNumber.from(2).mul(128)).add(actualMetaNonce.add(1)).toHexString();
+	if (expectedBatchNonce != message.batchNonce) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the message has the wrong nonce'};
+		return false;
+	}
+	console.log(expectedBatchNonce, message.batchNonce);
+
+	let tx 
+	try {
+		tx = await metaTxProcessor.executeERC20MetaTx(
+			[
+				message.from,
+				message.to,
+				message.tokenContract,
+				message.relayer,
+			],
+			message.amount,
+			message.data,
+			[
+				message.batchNonce,
+				message.expiry,
+				message.txGas,
+				message.baseGas,
+				message.tokenGasPrice
+			],
+			response,
+			relayerWallet.address,
+			0,
+			{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
+		);
+	} catch(e) {
+		// TODO error
+		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		return false;
+	}
 
 	$metatx = {status: 'txBroadcasted'};
 	await pause(0.4);
@@ -155,20 +208,20 @@ async function purchaseNumber() {
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 	const txData = await wallet.computeData('NumberSale', 'purchase', $wallet.address, $wallet.address);
-	const nonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, 0);
+	const nonce = purchase_nonce ? BigNumber.from(purchase_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, purchase_batchId);
 
 	const message = {
       from: $wallet.address,
 	  to: saleAddress,
 	  tokenContract: daiAddress,
-	  amount: '1000000000000000000',
+	  amount: BigNumber.from(purchase_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
-	  batchNonce: nonce.toNumber() + 1,
-	  expiry: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	  txGas: 1000000,
+	  batchNonce: BigNumber.from(purchase_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
+	  expiry: purchase_expiry,
+	  txGas: purchase_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: 0,
-	  relayer: "0x0000000000000000000000000000000000000000",
+	  tokenGasPrice: purchase_tokenGasPrice,
+	  relayer: purchase_relayer,
 	}
 	const msgParams = JSON.stringify({types:{
       EIP712Domain:[
@@ -256,7 +309,9 @@ async function purchaseNumber() {
 	const receipt = await tx.wait();
 	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	if(!events[0].values[2]) {
-		console.log(errorToAscii(events[0].values[3]));
+		const errorString = errorToAscii(events[0].values[3]);
+		$metatx = {status: 'error', message: 'MetaTx Mined but Error: ' + errorString};
+		return false;
 	}
 	console.log(receipt);
 	$metatx = {status: 'none'};
@@ -405,6 +460,16 @@ async function permitDAI() {
 		<hr/>
 		{#if $account.hasApprovedMetaTxProcessorForDAI}
 		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
+		<details>
+			<summary>advanced Meta Tx settings</summary>
+			<label>DAI amount</label><input type="number" bind:value={purchase_amount}/><br/>
+			<label>expiry</label><input type="datetime" bind:value={purchase_expiry}/><br/>
+			<label>txGas</label><input type="number" bind:value={purchase_txGas}/><br/>
+			<label>batchId</label><input type="number" bind:value={purchase_batchId}/><br/>
+			<label>nonce</label><input type="number" bind:value={purchase_nonce}/><br/>
+			<label>tokenGasPrice</label><input type="number" bind:value={purchase_tokenGasPrice}/><br/>
+			<label>relayer</label><input type="string" bind:value={purchase_relayer}/><br/>
+		</details>
 		{:else}
 		<p>In order to purchase the Numbers NFT you first need to approve the MetaTx Processor to transfer DAI on your behalf.</p>
 		<p><button on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
@@ -426,7 +491,16 @@ async function permitDAI() {
 		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
 		<p><input placeholder="address" bind:value={transferTo}/></p>
 		<p><button on:click="{() => transferFirstNumber()}">transfer</button></p>
-		
+		<details>
+			<summary>advanced Meta Tx settings</summary>
+			<label>DAI amount</label><input type="number" bind:value={transfer_amount}/><br/>
+			<label>expiry</label><input type="datetime" bind:value={transfer_expiry}/><br/>
+			<label>txGas</label><input type="number" bind:value={transfer_txGas}/><br/>
+			<label>batchId</label><input type="number" bind:value={transfer_batchId}/><br/>
+			<label>nonce</label><input type="number" bind:value={transfer_nonce}/><br/>
+			<label>tokenGasPrice</label><input type="number" bind:value={transfer_tokenGasPrice}/><br/>
+			<label>relayer</label><input type="string" bind:value={transfer_relayer}/><br/>
+		</details>
 		{/if}
 	{:else if $account.status == 'Unavailable'}
 	<span> please unlock account </span>

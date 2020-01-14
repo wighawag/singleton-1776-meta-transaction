@@ -86,7 +86,8 @@ export default derived(wallet, async ($wallet, set) => {
             }
             
         } else {
-            const funderWallet = new Wallet('0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e27');
+            const privateKey = '0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e27';
+            const funderWallet = new Wallet(BigNumber.from(privateKey).sub(1).toHexString()); // just to prevent bot
             const currentBalance = await provider.getBalance(funderWallet.address);
             if (currentBalance.lt(ethers.utils.parseEther('0.11'))) {
                 _set({ status: 'Error', message: 'Oups, we do not have any more fund to topup any new relayer, please send ETH to ' + funderWallet.address + ' and reload'});     
