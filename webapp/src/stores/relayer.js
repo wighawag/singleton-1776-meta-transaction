@@ -116,14 +116,14 @@ const store = derived(wallet, async ($wallet, set) => {
                     value: ethers.utils.parseEther('0.1'),
                     chainId: 1 // TODO
                 };
-                // const tx = await funder.sendTransaction(txData);
+                const tx = await funder.sendTransaction(txData);
                 
-                // let txObject = {};
-                // txObject[txField] = tx.hash;
-                // _set(txObject);
-                // const receipt = await tx.wait();
-                // console.log('FUNDING RECEIPT', receipt);
-                // // TODO try catch no fund
+                let txObject = {};
+                txObject[txField] = tx.hash;
+                _set(txObject);
+                const receipt = await tx.wait();
+                console.log('FUNDING RECEIPT', receipt);
+                // TODO try catch no fund
                 _set({ status: 'Loaded'});
             }
         }
