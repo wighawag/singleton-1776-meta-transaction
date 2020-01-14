@@ -1,6 +1,33 @@
 <script>
 import wallet from '../stores/wallet';
+import metatx from '../stores/metatx';
 </script>
+
+<style>
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  text-align:center;
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+</style>
 
 {#if $wallet.status == 'Loading'}
     <h3> Please wait... </h3>
@@ -34,10 +61,25 @@ import wallet from '../stores/wallet';
     {:else if typeof $wallet.initialBalance !== 'undefined' && $wallet.initialBalance == 0}
         <h3> You have zero balance</h3>
     {:else}
-        {#if $wallet.requestingTx}
+        <!-- {#if $wallet.requestingSignature}
             <h3> Please accept the transaction request </h3>
-        {:else}
+        {:else} -->
         <slot></slot>    
-        {/if}
+        <!-- {/if} -->
     {/if}
 {/if}
+
+<div id="myModal" class="modal" style="display:{($wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
+    <!-- Modal content -->
+    <div class="modal-content">
+        {#if $metatx.status == 'submitting'}
+        <p>submiting to relayer...</p>
+        {:else if $metatx.status == 'waitingRelayer'}
+        <p>waiting for relayer...</p>
+        {:else if $metatx.status == 'txBroadcasted'}
+        <p>waiting for relay tx to be mined...</p>
+        {:else}
+        <p>Please accept signature</p>
+        {/if}
+    </div>
+</div>

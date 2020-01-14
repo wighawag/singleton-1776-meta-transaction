@@ -1,8 +1,10 @@
 <script>
 import wallet from '../stores/wallet';
+import metatx from '../stores/metatx';
 import WalletWrapper from '../components/WalletWrapper';
 import account from '../stores/account';
 import * as ethers from 'ethers';
+import {pause} from '../utils/time'
 
 const { Wallet, Contract, BigNumber, AbiCoder } = ethers;
 
@@ -168,37 +170,52 @@ async function purchaseNumber() {
 	});
 	
 	const response = await wallet.sign(msgParams);
-
+	$metatx = {status: 'submitting'};
+	await pause(0.4);
 	const provider = wallet.getFallbackProvider();
 	const relayer = new Wallet('0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e26').connect(provider);
 	const metaTxProcessor = new Contract(metaTxProcessorContract.address, metaTxProcessorContract.abi, relayer);
 
-	const tx = await metaTxProcessor.executeERC20MetaTx(
-		[
-			message.from,
-			message.to,
-			message.tokenContract,
-			message.relayer,
-		],
-		message.amount,
-		message.data,
-		[
-			message.batchNonce,
-			message.expiry,
-			message.txGas,
-			message.baseGas,
-			message.tokenGasPrice
-		],
-		response,
-		relayer.address,
-		0,
-		{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
-	);
+	$metatx = {status: 'waitingRelayer'};
+	await pause(0.4);
+	let tx 
+	try {
+		tx = await metaTxProcessor.executeERC20MetaTx(
+			[
+				message.from,
+				message.to,
+				message.tokenContract,
+				message.relayer,
+			],
+			message.amount,
+			message.data,
+			[
+				message.batchNonce,
+				message.expiry,
+				message.txGas,
+				message.baseGas,
+				message.tokenGasPrice
+			],
+			response,
+			relayer.address,
+			0,
+			{gasLimit: BigNumber.from('2000000'), chainId: 1} // chainId = 1 is required for ganache
+		);
+	} catch(e) {
+		// TODO error
+		$metatx = {status: 'error'}; // TODO no balance ?
+		return false;
+	}
+	
+	$metatx = {status: 'txBroadcasted'};
+	await pause(0.4);
 	const receipt = await tx.wait();
+	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
 	if(!events[0].values[2]) {
 		console.log(errorToAscii(events[0].values[3]));
 	}
 	console.log(receipt);
+	$metatx = {status: 'none'};
 	return receipt;
 }
 
@@ -282,6 +299,10 @@ async function permitDAI() {
 		margin: 1em auto;
 	}
 
+	.center {
+		text-align:center;
+	}
+
 	@media (min-width: 480px) {
 		h1 {
 			font-size: 4em;
@@ -290,27 +311,30 @@ async function permitDAI() {
 </style>
 
 <svelte:head>
-	<title>Sapper project template</title>
+	<title>Meta Tx Demo</title>
 </svelte:head>
 
 <WalletWrapper>
-    <h2>Meta Tx Demo</h2>
+    <h2 class="center">Meta Tx Demo</h2>
     <!-- <figure>
         <img alt='Borat' src='great-success.png'>
         <figcaption>HIGH FIVE!</figcaption>
     </figure> -->
 
 	
-	<hr/>
-	account
-	<hr/>
+	
 	{#if $account.status == 'Loading'}
+	<hr/>
     <span> fetching account info </span>
+	<hr/>
 	{:else if $account.status == 'Loaded'}
+		<hr/>
 		<p>Your DAI Balance:</p>
-		<p>{$account.daiBalance.div('1000000000000000000')}</p>
+		<hr/>
+		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
+		<hr/>
 		{#if $account.hasApprovedMetaTxProcessorForDAI}
-		<button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button>
+		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
 		{:else}
 		<p>In order to purchase the Numbers NFT you first need to approve the MetaTx Processor to transfer DAI on your behalf.</p>
 		<p><button on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
@@ -318,7 +342,7 @@ async function permitDAI() {
 		<br/>
 		<br/>
 		<hr/>
-		<h3>Your Numbers NFT below :</h3>
+		<p>Your Numbers NFT below (only show 11 max) :</p>
 		<hr/>
 		<ul>
 		{#each $account.numbers as item}
@@ -329,7 +353,7 @@ async function permitDAI() {
 		</ul>
 		{#if $account.numbers.length}
 		<hr/>
-		<p>Transfer your first Number</p>
+		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
 		<p><input placeholder="address" bind:value={transferTo}/></p>
 		<p><button on:click="{() => transferFirstNumber()}">transfer</button></p>
 		

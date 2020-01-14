@@ -33,7 +33,7 @@ export default derived(wallet, ($wallet, set) => {
         // const numbers = wallet.getContract('Numbers');
         const nftBalance = await wallet.call('Numbers', 'balanceOf', $wallet.address);
         const items = [];
-        for (let i = 0; i < Math.min(5, nftBalance); i++) {
+        for (let i = 0; i < Math.min(11, nftBalance); i++) {
             const id = await wallet.call('Numbers', 'tokenOfOwnerByIndex', $wallet.address, i);
             items.push(id);
         }
