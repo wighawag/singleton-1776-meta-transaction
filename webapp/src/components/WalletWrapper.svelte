@@ -43,12 +43,20 @@ import relayer from '../stores/relayer';
   text-decoration: none;
   cursor: pointer;
 }
+
+h3 {
+    text-align: center;
+}
+p {
+    text-align: center;
+}
 </style>
 
 {#if $wallet.status == 'Loading'}
     <h3> Please wait... </h3>
 {:else if $wallet.status == 'Locked'}
-    <button on:click="{wallet.unlock}"> Connect your wallet</button>
+    <p>This demo requires you to have a wallet compatible with the EIP-712 standard. Please note that this has been tested only on Metamask.</p>
+    <p><button on:click="{wallet.unlock}">Connect your wallet</button></p>
 {:else if $wallet.status == 'Unlocking'}
     <h3> Please accept the connection request </h3>
 {:else if $wallet.status == 'NoWallet'}
@@ -108,7 +116,7 @@ import relayer from '../stores/relayer';
             {:else if $metatx.status == 'waitingRelayer'}
             <p>waiting for relayer...</p>
             {:else if $metatx.status == 'txBroadcasted'}
-            <p>waiting for relay tx to be mined...</p>
+            <p>waiting for relay tx to be mined (it can take a while)...</p>
             {:else}
             <p>Please accept signature</p>
             {/if}

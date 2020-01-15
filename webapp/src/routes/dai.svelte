@@ -81,7 +81,7 @@ async function transferFirstNumber() {
 	  expiry: transfer_expiry,
 	  txGas: transfer_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: transfer_tokenGasPrice,
+	  tokenGasPrice: BigNumber.from(transfer_tokenGasPrice * 1000000000).mul('1000000000').toString(), // TODO use decimals
 	  relayer: transfer_relayer,
 	}
 
@@ -237,7 +237,7 @@ async function purchaseNumber() {
 	  expiry: purchase_expiry,
 	  txGas: purchase_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: purchase_tokenGasPrice,
+	  tokenGasPrice: BigNumber.from(purchase_tokenGasPrice * 1000000000).mul('1000000000').toString(), // TODO use decimals
 	  relayer: purchase_relayer,
 	}
 	const msgParams = JSON.stringify({types:{
@@ -508,7 +508,7 @@ async function permitDAI() {
 		<p>Congrats, you already authorized our singleton metatx processor to handle DAI</p>
 		<p>Your DAI Balance:</p>
 		<hr/>
-		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
+		<h3 class="center">{$account.daiBalance.div('1000000000000000') / 1000}</h3>
 		<hr/>
 		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
 		<details>

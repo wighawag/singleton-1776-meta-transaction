@@ -81,7 +81,7 @@ async function transferFirstNumber() {
 	  expiry: transfer_expiry,
 	  txGas: transfer_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: transfer_tokenGasPrice,
+	  tokenGasPrice: BigNumber.from(transfer_tokenGasPrice * 1000000000).mul('1000000000').toString(), // TODO use decimals
 	  relayer: transfer_relayer,
 	}
 
@@ -236,7 +236,7 @@ async function purchaseNumber() {
 	  expiry: purchase_expiry,
 	  txGas: purchase_txGas,
 	  baseGas: 100000,
-	  tokenGasPrice: purchase_tokenGasPrice,
+	  tokenGasPrice: BigNumber.from(purchase_tokenGasPrice * 1000000000).mul('1000000000').toString(), // TODO use decimals
 	  relayer: purchase_relayer,
 	}
 	const msgParams = JSON.stringify({types:{
@@ -393,25 +393,26 @@ async function purchaseNumber() {
 	<title>Meta Tx Demo</title>
 </svelte:head>
 
+<h2 class="center">Meta Tx Demo</h2>
+<p>Welcome to the Take Back The Web Hackathon Demo For a Meta Transaction Standard</p>
+<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a href="about">here</a>.</p>
+<hr/>
 <WalletWrapper>
-    <h2 class="center">Meta Tx Demo</h2>
     <!-- <figure>
         <img alt='Borat' src='great-success.png'>
         <figcaption>HIGH FIVE!</figcaption>
     </figure> -->
-
-	
 	
 	{#if $account.status == 'Loading'}
 	<hr/>
-    <span> fetching account info </span>
+    <p> fetching account info </p>
 	<hr/>
 	{:else if $account.status == 'Loaded'}
 		<hr/>
 		<p>MTX is a token that support our MetaTx standard and can thus be used without any extra step. You can even start interacting with contracts that support the standard and they can even charge tokens (no pre-approval required!).</p>
 		<p>Your MTX Balance:</p>
 		<hr/>
-		<h3 class="center">{$account.mtxBalance.div('1000000000000000000')}</h3>
+		<h3 class="center">{$account.mtxBalance.div('1000000000000000') / 1000}</h3>
 		<hr/>
 		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 MTX</button></p>
 		<details>
