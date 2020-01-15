@@ -50,8 +50,22 @@ h3 {
 p {
     text-align: center;
 }
+.wrapper {
+    text-align: center;
+}
+.wrapper ul {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    /* For IE, the outcast */
+    zoom:1;
+    *display: inline;
+}
+.wrapper li {
+    padding: 2px 5px;
+}
 </style>
-
+<br/>
 {#if $wallet.status == 'Loading'}
     <h3> Please wait... </h3>
 {:else if $wallet.status == 'Locked'}
@@ -77,12 +91,19 @@ p {
     <button on:click="{() => wallet.retry()}">Retry</button>
 {:else if $wallet.status == 'Ready'}
     {#if $wallet.chainNotSupported}
-        <h3> Please change your network to either</h3>
+        <h3 class="errorTitle"> You are on an unsupported chain</h3>
+        {#if $wallet.supportedChains.length == 1}
+        <h3> Please change your chain to {$wallet.supportedChains[0].name}</h3>
+        {:else}
+        <h3> Please change your chain to either</h3>
+        <div class="wrapper">
         <ul>
-        {#each $wallet.supportedChainIds as chainId}
-        <li>{chainId}</li>
+        {#each $wallet.supportedChains as chain}
+        <li>{chain.name}</li>
         {/each}
         </ul>
+        </div>
+        {/if}
         {#if $wallet.requireManualChainReload }
             <h5 class="errorMessage">You might need to reload the page after switching to the new chain</h5>
             <button on:click="{() => wallet.reloadPage()}">Reload</button>

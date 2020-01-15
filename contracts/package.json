@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "rocketh launch -kq ../webapp/src/dev_contractsInfo.json",
-    "deploy-rinkeby": "rocketh launch -n https://rinkeby.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4 -q ../webapp/src/contractsInfo.json"
+    "deploy-rinkeby": "rocketh launch -n https://rinkeby.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4 -q ../webapp/src/contractsInfo.json",
+    "deploy-goerli": "rocketh launch -n https://goerli.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4 -q ../webapp/src/contractsInfo.json"
   }
 }
