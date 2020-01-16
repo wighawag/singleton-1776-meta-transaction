@@ -1,6 +1,18 @@
 <!doctype html>
 <html lang='en'>
 <head>
+	<script src="js/mobileConsole.1.3.js"></script>
+	<script>
+		(function () {
+			var src = '//cdn.jsdelivr.net/npm/eruda';
+			if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
+			document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
+			document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
+		})();
+		if (!!/mobileConsole=true/.test(window.location)) {
+		mobileConsole.init();
+		}
+	</script>
 	<meta charset='utf-8'>
 	<meta name='viewport' content='width=device-width,initial-scale=1.0'>
 	<meta name='theme-color' content='#333333'>
