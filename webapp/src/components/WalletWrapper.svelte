@@ -138,6 +138,8 @@ p {
             <p>waiting for relayer...</p>
             {:else if $metatx.status == 'txBroadcasted'}
             <p>waiting for relay tx to be mined (it can take a while)...</p>
+            {:else if $metatx.status == 'txConfirmed'}
+            <p>tx confirmed, please wait...</p>
             {:else}
             <p>Please accept signature</p>
             {/if}

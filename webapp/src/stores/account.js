@@ -9,7 +9,8 @@ const $data = {
 };
 
 let interval;
-export default derived(wallet, ($wallet, set) => {
+let account;
+account = derived(wallet, ($wallet, set) => {
     function _set(obj) {
         let diff = 0;
         for (let key of Object.keys(obj)) {
@@ -54,12 +55,14 @@ export default derived(wallet, ($wallet, set) => {
         });
     }
 
-    async function startListening() {
+    async function startListening(setLoading) {
         if (!interval) {
-            _set({
-                status: 'Loading', // TODO only if no data already available ?
-                daiBalance: undefined
-            });
+            if (setLoading) {
+                _set({
+                    status: 'Loading', // TODO only if no data already available ?
+                    daiBalance: undefined
+                });
+            }
             fetch();
             interval = setInterval(() => {
                 fetch();
@@ -77,6 +80,11 @@ export default derived(wallet, ($wallet, set) => {
         interval = undefined;
     }
 
+    account.refresh = function() {
+        stopListening();
+        startListening(false);
+    }
+
     if ($wallet.status === 'Ready' && !$wallet.chainNotSupported) {
         startListening();
     } else {
@@ -85,3 +93,5 @@ export default derived(wallet, ($wallet, set) => {
         _set({ status: 'Unavailable', daiBalance: undefined });
     }
 }, $data);
+
+export default account;

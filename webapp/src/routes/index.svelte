@@ -59,7 +59,7 @@ async function getEventsFromReceipt(ethersProvider, ethersContract, sig, receipt
 
 async function transferFirstNumber() {
 	const nftAddress = wallet.getContract('Numbers').address;
-	const MTXAddress = wallet.getContract('MTX').address;
+	const mtxAddress = wallet.getContract('MTX').address;
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 
@@ -167,25 +167,25 @@ async function transferFirstNumber() {
 
 	let tx 
 	try {
-		tx = await metaTxProcessor.executeERC20MetaTx(
-			[
-				message.from,
-				message.to,
-				message.tokenContract,
-				message.relayer,
-			],
-			message.amount,
-			message.data,
-			[
-				message.batchNonce,
-				message.expiry,
-				message.txGas,
-				message.baseGas,
-				message.tokenGasPrice
-			],
-			response,
+		tx = await metaTxProcessor.executeMetaTransaction(
+			{
+				from: message.from,
+				to: message.to,
+				data: message.data,
+				signature: response,
+				signatureType: 0
+			},
+			{
+				tokenContract: message.tokenContract,
+        		amount: message.amount,
+        		batchNonce: message.batchNonce,
+        		expiry: message.expiry,
+        		txGas: message.txGas,
+        		baseGas: message.baseGas,
+        		tokenGasPrice: message.tokenGasPrice,
+        		relayer: message.relayer,
+			},
 			relayerWallet.address,
-			0,
 			{gasLimit: BigNumber.from('2000000'), chainId: relayer.getChainIdToUse()}
 		);
 	} catch(e) {
@@ -211,6 +211,8 @@ async function transferFirstNumber() {
 		console.log(errorToAscii(events[0].values[3]));
 	}
 	console.log(receipt);
+	account.refresh();
+	$metatx = {status: 'txConfirmed'};
 	while($account.blockNumber < receipt.blockNumber) {
 		await pause(0.5);
 	}
@@ -299,25 +301,25 @@ async function purchaseNumber() {
 	// await pause(0.4);
 	let tx 
 	try {
-		tx = await metaTxProcessor.executeERC20MetaTx(
-			[
-				message.from,
-				message.to,
-				message.tokenContract,
-				message.relayer,
-			],
-			message.amount,
-			message.data,
-			[
-				message.batchNonce,
-				message.expiry,
-				message.txGas,
-				message.baseGas,
-				message.tokenGasPrice
-			],
-			response,
+		tx = await metaTxProcessor.executeMetaTransaction(
+			{
+				from: message.from,
+				to: message.to,
+				data: message.data,
+				signature: response,
+				signatureType: 0
+			},
+			{
+				tokenContract: message.tokenContract,
+        		amount: message.amount,
+        		batchNonce: message.batchNonce,
+        		expiry: message.expiry,
+        		txGas: message.txGas,
+        		baseGas: message.baseGas,
+        		tokenGasPrice: message.tokenGasPrice,
+        		relayer: message.relayer,
+			},
 			relayerWallet.address,
-			0,
 			{gasLimit: BigNumber.from('2000000'), chainId: relayer.getChainIdToUse()}
 		);
 	} catch(e) {
@@ -343,6 +345,8 @@ async function purchaseNumber() {
 		return false;
 	}
 	console.log(receipt);
+	account.refresh();
+	$metatx = {status: 'txConfirmed'};
 	while($account.blockNumber < receipt.blockNumber) {
 		await pause(0.5);
 	}
@@ -454,7 +458,7 @@ async function purchaseNumber() {
 		</details>
 		{/if}
 	{:else if $account.status == 'Unavailable'}
-	<span> please unlock account </span>
+	<span> please wait... <!--unlock account--> </span> <!-- temporary state, TODO synchronise flow -->
 	{:else}
 	<span> ERROR </span>
 	{/if}

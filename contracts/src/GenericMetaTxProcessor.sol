@@ -1,4 +1,5 @@
 pragma solidity 0.6.1;
+pragma experimental ABIEncoderV2;
 
 import "./Libraries/BytesUtil.sol";
 import "./Libraries/AddressUtils.sol";
@@ -56,122 +57,103 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         );
     }
 
-    /// @notice perform the meta-tx using EIP-712 message.
-    /// @param addresses : from, to, tokenContract, relayer
-    /// @param amount number of tokens to be transfered/allowed as part of the call.
-    /// @param data bytes to send to the destination.
-    /// @param params the meta-tx parameters : batchNonce, expiry, txGas, baseGas, tokenGasPrice.
-    /// @param signature the signature that ensure from has allowed the meta-tx to be performed.
-    /// @param tokenReceiver recipient of the gas charge.
-    /// @param signatureType indicate whether it was signed via EOA=0, EIP-1654=1 or EIP-1271=2.
-    /// @return success whether the execution was successful.
-    /// @return returnData data resulting from the execution.
-    function executeERC20MetaTx(
-        address[4] calldata addresses, // from, to, tokenContract, relayer
-        uint256 amount,
-        bytes calldata data,
-        uint256[5] calldata params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
-        bytes calldata signature,
-        address tokenReceiver,
-        SignatureType signatureType
-    ) external returns (bool success, bytes memory returnData) {
+    struct Call {
+        address from;
+        address to;
+        bytes data;
+        bytes signature;
+        SignatureType signatureType;
+    }
+
+    struct CallParams {
+        address tokenContract;
+        uint256 amount;
+        uint256 batchNonce;
+        uint256 expiry;
+        uint256 txGas;
+        uint256 baseGas;
+        uint256 tokenGasPrice;
+        address relayer;
+    }
+
+    function executeMetaTransaction(
+        Call memory callData,
+        CallParams memory callParams,
+        address tokenReceiver
+    ) public returns (bool success, bytes memory returnData) {
         require(!lock, "IN_PROGRESS");
         lock = true;
-        _ensureParametersValidity(addresses[0], params, addresses[3]);
-        _ensureCorrectSigner(
-            addresses,
-            amount,
-            data,
-            params,
-            signature,
-            signatureType
-        );
-        (success, returnData) = _performERC20MetaTx(
-                addresses[0],
-                addresses[1],
-                ERC20(addresses[2]),
-                amount,
-                data,
-                params,
-                tokenReceiver
-            );
+        _ensureParametersValidity(callData, callParams);
+        _ensureCorrectSigner(callData, callParams);
+        (success, returnData) = _performERC20MetaTx(callData, callParams, tokenReceiver);
         lock = false;
     }
 
     // ////////////////////////////// INTERNALS /////////////////////////
 
     function _ensureParametersValidity(
-        address from,
-        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
-        address relayer
+        Call memory callData,
+        CallParams memory callParams
     ) internal view {
         require(
-            relayer == address(0) || relayer == msg.sender,
+            callParams.relayer == address(0) || callParams.relayer == msg.sender,
             "wrong relayer"
         );
-        require(block.timestamp < params[1], "expired");
-        uint128 batchId = uint128(params[0] / 2**128);
-        uint128 nonce = uint128(params[0]);
-        require(nonces[from][batchId] + 1 == nonce, "nonce out of order");
+        require(block.timestamp < callParams.expiry, "expired");
+        uint128 batchId = uint128(callParams.batchNonce / 2**128);
+        uint128 nonce = uint128(callParams.batchNonce);
+        require(nonces[callData.from][batchId] + 1 == nonce, "nonce out of order");
     }
 
     function _encodeMessage(
-        address[4] memory addresses, // from, to, tokenContract, relayer
-        uint256 amount,
-        bytes memory data,
-        uint256[5] memory params // batchNonce, expiry, txGas, baseGas, tokenGasPrice
+        Call memory callData,
+        CallParams memory callParams
     ) internal view returns (bytes memory) {
         return abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
-            keccak256(messageBytes(addresses, amount, data, params))
+            keccak256(messageBytes(callData, callParams))
         );
     }
 
     function messageBytes(
-        address[4] memory addresses, // from, to, tokenContract, relayer
-        uint256 amount,
-        bytes memory data,
-        uint256[5] memory params
+        Call memory callData,
+        CallParams memory callParams
     ) internal pure returns(bytes memory) {
         return abi.encode(
             ERC20METATRANSACTION_TYPEHASH,
-            addresses[0],
-            addresses[1],
-            addresses[2],
-            amount,
-            keccak256(data),
-            params[0],
-            params[1],
-            params[2],
-            params[3],
-            params[4],
-            addresses[3]
+            callData.from,
+            callData.to,
+            callParams.tokenContract,
+            callParams.amount,
+            keccak256(callData.data),
+            callParams.batchNonce,
+            callParams.expiry,
+            callParams.txGas,
+            callParams.baseGas,
+            callParams.tokenGasPrice,
+            callParams.relayer
         );
     }
 
     function _ensureCorrectSigner(
-        address[4] memory addresses, // from, to, tokenContract, relayer
-        uint256 amount,
-        bytes memory data,
-        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
-        bytes memory signature,
-        SignatureType signatureType
+        Call memory callData,
+        CallParams memory callParams
     ) internal view {
-        bytes memory dataToHash = _encodeMessage(addresses, amount, data, params);
-        if (signatureType == SignatureType.EIP1271) {
+        bytes memory dataToHash = _encodeMessage(callData, callParams);
+        if (callData.signatureType == SignatureType.EIP1271) {
             require(
-                ERC1271(addresses[0]).isValidSignature(dataToHash, signature) == ERC1271_MAGICVALUE,
+                ERC1271(callData.from).isValidSignature(dataToHash, callData.signature) == ERC1271_MAGICVALUE,
                 "invalid 1271 signature"
             );
-        } else if(signatureType == SignatureType.EIP1654){
+        } else if(callData.signatureType == SignatureType.EIP1654){
             require(
-                ERC1654(addresses[0]).isValidSignature(keccak256(dataToHash), signature) == ERC1654_MAGICVALUE,
+                ERC1654(callData.from).isValidSignature(keccak256(dataToHash), callData.signature) == ERC1654_MAGICVALUE,
                 "invalid 1654 signature"
             );
         } else {
-            address signer = SigUtil.recover(keccak256(dataToHash), signature);
-            require(signer == addresses[0], "signer != from");
+            address signer = SigUtil.recover(keccak256(dataToHash), callData.signature);
+            require(signer == callData.from, "signer != from");
         }
     }
 
@@ -239,70 +221,68 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     }
 
     function _performERC20MetaTx(
-        address from,
-        address to,
-        ERC20 tokenContract,
-        uint256 amount,
-        bytes memory data,
-        uint256[5] memory params, // batchNonce, expiry, txGas, baseGas, tokenGasPrice
+        Call memory callData,
+        CallParams memory callParams,
         address tokenReceiver
     ) internal returns (bool success, bytes memory returnData) {
         {
-            uint128 batchId = uint128(params[0] / 2**128);
-            uint128 nonce = uint128(params[0]);
-            nonces[from][batchId] = nonce;
+            uint128 batchId = uint128(callParams.batchNonce / 2**128);
+            uint128 nonce = uint128(callParams.batchNonce);
+            nonces[callData.from][batchId] = nonce;
         }
 
-        if (data.length == 0) {
-            if(params[4] > 0) {
+        ERC20 tokenContract = ERC20(callParams.tokenContract);
+
+        if (callData.data.length == 0) {
+            if(callParams.tokenGasPrice > 0) {
                 _transferAndChargeForGas(
-                    from,
-                    to,
+                    callData.from,
+                    callData.to,
                     tokenContract,
-                    amount,
-                    params[2],
-                    params[4],
-                    params[3],
+                    callParams.amount,
+                    callParams.txGas,
+                    callParams.tokenGasPrice,
+                    callParams.baseGas,
                     tokenReceiver
                 );
             } else {
-                require(tokenContract.transferFrom(from, to, amount), "ERC20_TRANSFER_FAILED");
+                require(tokenContract.transferFrom(callData.from, callData.to, callParams.amount), "ERC20_TRANSFER_FAILED");
             }
             success = true;
         } else {
             require(
-                BytesUtil.doFirstParamEqualsAddress(data, from),
+                BytesUtil.doFirstParamEqualsAddress(callData.data, callData.from),
                 "first param != from"
             );
             uint256 previousBalance;
-            if(amount > 0) {
+            if(callParams.amount > 0) {
                 previousBalance = tokenContract.balanceOf(address(this));
-                require(tokenContract.transferFrom(from, address(this), amount), "ERC20_ALLOCATION_FAILED");
-                tokenContract.approve(to, amount);
+                require(tokenContract.transferFrom(callData.from, address(this), callParams.amount), "ERC20_ALLOCATION_FAILED");
+                tokenContract.approve(callData.to, callParams.amount);
             }
-            if(params[4] > 0) {
+            if(callParams.tokenGasPrice > 0) {
                 (success, returnData) = _executeWithSpecificGasAndChargeForIt(
-                    from,
-                    to,
+                    callData.from,
+                    callData.to,
                     tokenContract,
-                    params[2],
-                    params[4],
-                    params[3],
+                    callParams.txGas,
+                    callParams.tokenGasPrice,
+                    callParams.baseGas,
                     tokenReceiver,
-                    data
+                    callData.data
                 );
             } else {
-                (success, returnData) = _executeWithSpecificGas(to, params[2], data);
+                (success, returnData) = _executeWithSpecificGas(callData.to, callParams.txGas, callData.data);
             }
-            if(amount > 0) {
+            if(callParams.amount > 0) {
                 uint256 newBalance = tokenContract.balanceOf(address(this));
                 if (newBalance > previousBalance) {
-                    require(tokenContract.transfer(from, newBalance - previousBalance), "ERC20_REFUND_FAILED");
+                    require(tokenContract.transfer(callData.from, newBalance - previousBalance), "ERC20_REFUND_FAILED");
                 }
             }
         }
 
-        emit MetaTx(from, params[0], success, returnData);
+        emit MetaTx(callData.from, callParams.batchNonce, success, returnData);
     }
 
     function meta_nonce(address from, uint128 batchId) external view returns(uint128) {
