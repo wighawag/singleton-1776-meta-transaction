@@ -391,6 +391,13 @@ async function permitDAI() {
 	const dai = wallet.getContract('DAI');
 	const metaTxProcessorAddress = wallet.getContract('GenericMetaTxProcessor').address;
 	const nonce = await wallet.call('DAI', 'nonces', $wallet.address);
+	const message = {
+      holder: $wallet.address,
+	  spender: metaTxProcessorAddress,
+	  nonce: nonce.toHexString(),
+	  expiry: 0,
+	  allowed: true
+	};
 	const msgParams = JSON.stringify({types:{
       EIP712Domain:[
         {name:"name",type:"string"},
@@ -408,13 +415,8 @@ async function permitDAI() {
     },
     primaryType:"Permit",
     domain:{name:"Dai Stablecoin",version:"1",verifyingContract: dai.address},
-    message:{
-      holder: $wallet.address,
-	  spender: metaTxProcessorAddress,
-	  nonce: nonce.toHexString(),
-	  expiry: 0,
-	  allowed: true
-	}});
+	message
+	});
 	
 	let response;
 	try {
@@ -453,11 +455,11 @@ async function permitDAI() {
 	// await pause(0.4);
 
 	const tx = await DAI.permit(
-		$wallet.address,
-		metaTxProcessorAddress,
-		0,
-		0,
-		true,
+		message.holder,
+		message.spender,
+		message.nonce,
+		message.expiry,
+		message.allowed,
 		splitSig.v,
 		splitSig.r,
 		splitSig.s,
