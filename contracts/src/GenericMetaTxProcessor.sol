@@ -28,13 +28,14 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     bytes32 DOMAIN_SEPARATOR;
 
     bytes32 constant ERC20METATRANSACTION_TYPEHASH = keccak256(
-        "ERC20MetaTransaction(address from,address to,address tokenContract,uint256 amount,bytes data,uint256 batchNonce,uint256 expiry,uint256 txGas,uint256 baseGas,uint256 tokenGasPrice,address relayer)"
+        "ERC20MetaTransaction(address from,address to,address tokenContract,uint256 amount,bytes data,uint256 batchId,uint256 batchNonce,uint256 expiry,uint256 txGas,uint256 baseGas,uint256 tokenGasPrice,address relayer)"
     );
     // //////////////////////////////////////////
 
     // //////////////// EVENTS //////////////////
     event MetaTx(
         address indexed from,
+        uint256 indexed batchId,
         uint256 indexed batchNonce,
         bool success,
         bytes returnData
@@ -42,7 +43,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     // //////////////////////////////////////////
 
     // //////////////// STATE ///////////////////
-    mapping(address => mapping(uint128 => uint128)) nonces;
+    mapping(address => mapping(uint256 => uint256)) batches;
     bool lock = false;
     // //////////////////////////////////////////
 
@@ -68,6 +69,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     struct CallParams {
         address tokenContract;
         uint256 amount;
+        uint256 batchId;
         uint256 batchNonce;
         uint256 expiry;
         uint256 txGas;
@@ -100,9 +102,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             "wrong relayer"
         );
         require(block.timestamp < callParams.expiry, "expired");
-        uint128 batchId = uint128(callParams.batchNonce / 2**128);
-        uint128 nonce = uint128(callParams.batchNonce);
-        require(nonces[callData.from][batchId] + 1 == nonce, "nonce out of order");
+        require(batches[callData.from][callParams.batchId] + 1 == callParams.batchNonce, "batchNonce out of order");
     }
 
     function _encodeMessage(
@@ -127,6 +127,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             callParams.tokenContract,
             callParams.amount,
             keccak256(callData.data),
+            callParams.batchId,
             callParams.batchNonce,
             callParams.expiry,
             callParams.txGas,
@@ -225,11 +226,7 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
         CallParams memory callParams,
         address tokenReceiver
     ) internal returns (bool success, bytes memory returnData) {
-        {
-            uint128 batchId = uint128(callParams.batchNonce / 2**128);
-            uint128 nonce = uint128(callParams.batchNonce);
-            nonces[callData.from][batchId] = nonce;
-        }
+        batches[callData.from][callParams.batchId] = callParams.batchNonce;
 
         ERC20 tokenContract = ERC20(callParams.tokenContract);
 
@@ -282,10 +279,10 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
             }
         }
 
-        emit MetaTx(callData.from, callParams.batchNonce, success, returnData);
+        emit MetaTx(callData.from, callParams.batchId, callParams.batchNonce, success, returnData);
     }
 
-    function meta_nonce(address from, uint128 batchId) external view returns(uint128) {
-        return nonces[from][batchId];
+    function meta_nonce(address from, uint256 batchId) external view returns(uint256) {
+        return batches[from][batchId];
     }
 }

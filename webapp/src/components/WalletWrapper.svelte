@@ -65,32 +65,40 @@ p {
     padding: 2px 5px;
 }
 </style>
-<br/>
 {#if $wallet.status == 'Loading'}
+<br/>
     <h3> Please wait... </h3>
 {:else if $wallet.status == 'Locked'}
+<br/>
     <p>This demo requires you to have a wallet compatible with the EIP-712 standard. Please note that this has been tested only on Metamask.</p>
     <p><button on:click="{wallet.unlock}">Connect your wallet</button></p>
 {:else if $wallet.status == 'Unlocking'}
+<br/>
     <h3> Please accept the connection request </h3>
 {:else if $wallet.status == 'NoWallet'}
+<br/>
   <h3>You need a web3 wallet</h3>
 {:else if $wallet.status == 'CreatingLocalWallet'}
+<br/>
     <h3>Creating Local Wallet</h3>
 {:else if $wallet.status == 'Opera_FailedChainId'}
+<br/>
     <h3 class="errorTitle"> You are using Opera </h3>
     <h5 class="errorMessage">You need to set up your wallet. if a popup did not come up you'll need to go into Opera setting to set it up.</h5>
     <button on:click="{() => wallet.retry()}">Retry</button>    
 {:else if $wallet.status == 'Opera_Locked'}
+<br/>
     <h3 class="errorTitle"> You are using Opera </h3>
     <h5 class="errorMessage"> You need to authorize access to your wallet. </h5>
     <button on:click="{() => wallet.retry()}">Request Access</button>
 {:else if $wallet.status == 'Error'}
+<br/>
     <h3 class="errorTitle"> There were an Error </h3>
     <h5 class="errorMessage">{$wallet.error.message}</h5>
     <button on:click="{() => wallet.retry()}">Retry</button>
 {:else if $wallet.status == 'Ready'}
     {#if $wallet.chainNotSupported}
+    <br/>
         <h3 class="errorTitle"> You are on an unsupported chain</h3>
         {#if $wallet.supportedChains.length == 1}
         <h3> Please change your chain to {$wallet.supportedChains[0].name}</h3>
@@ -109,6 +117,7 @@ p {
             <button on:click="{() => wallet.reloadPage()}">Reload</button>
         {/if}
     {:else if typeof $wallet.initialBalance !== 'undefined' && $wallet.initialBalance == 0}
+    <br/>
         <h3> You have zero balance</h3>
     {:else}
         <!-- {#if $wallet.requestingSignature}

@@ -57,7 +57,14 @@ function traceCaller(n) {
     return s;
 }
 
-const logLevel = (typeof window != 'undefined' && typeof window.params != 'undefined') ? window.params.logLevel || 20 : 20;
+let logLevel = (typeof window != 'undefined' && typeof window.params != 'undefined') ? window.params.logLevel : undefined;
+if (!logLevel) {
+    if (typeof window != 'undefined' && typeof window._debug != 'undefined' && window._debug) {
+        logLevel = 100;
+    } else {
+        logLevel = 20;
+    }
+}
 
 export default {
     silent(...args) {

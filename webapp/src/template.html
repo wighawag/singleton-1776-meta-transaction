@@ -5,12 +5,14 @@
 	<script>
 		(function () {
 			var src = '//cdn.jsdelivr.net/npm/eruda';
-			if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
+			if (!/_d_eruda/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
+			window._debug = true;
 			document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
 			document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
 		})();
-		if (!!/mobileConsole=true/.test(window.location)) {
-		mobileConsole.init();
+		if (!!/_d_mc/.test(window.location)) {
+			window._debug = true;
+			mobileConsole.init();
 		}
 	</script>
 	<meta charset='utf-8'>

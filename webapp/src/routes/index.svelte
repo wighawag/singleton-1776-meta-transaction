@@ -77,7 +77,8 @@ async function transferFirstNumber() {
 	  tokenContract: mtxAddress,
 	  amount: BigNumber.from(transfer_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
-	  batchNonce: BigNumber.from(transfer_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
+	  batchId: transfer_batchId,
+	  batchNonce: nonce.add(1).toHexString(),
 	  expiry: transfer_expiry,
 	  txGas: transfer_txGas,
 	  baseGas: 100000,
@@ -97,6 +98,7 @@ async function transferFirstNumber() {
 		{name:"tokenContract",type:"address"},
 		{name:"amount",type:"uint256"},
 		{name:"data",type:"bytes"},
+		{name:"batchId",type:"uint256"},
 		{name:"batchNonce",type:"uint256"},
 		{name:"expiry",type:"uint256"},
 		{name:"txGas",type:"uint256"},
@@ -158,7 +160,7 @@ async function transferFirstNumber() {
 	}
 
 	const actualMetaNonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, transfer_batchId);
-	const expectedBatchNonce = BigNumber.from(transfer_batchId).mul(BigNumber.from(2).mul(128)).add(actualMetaNonce.add(1)).toHexString();
+	const expectedBatchNonce = actualMetaNonce.add(1).toHexString();
 	if (expectedBatchNonce != message.batchNonce) {
 		$metatx = {status: 'error', message: 'Relayer will not execute it as the message has the wrong nonce'};
 		return false;
@@ -177,7 +179,8 @@ async function transferFirstNumber() {
 			},
 			{
 				tokenContract: message.tokenContract,
-        		amount: message.amount,
+				amount: message.amount,
+				batchId: message.batchId,
         		batchNonce: message.batchNonce,
         		expiry: message.expiry,
         		txGas: message.txGas,
@@ -190,7 +193,8 @@ async function transferFirstNumber() {
 		);
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error', message: 'relayer tx failed'};
+		console.log(e);
+		$metatx = {status: 'error', message: 'relayer tx failed at submission'};
 		return false;
 	}
 
@@ -201,10 +205,11 @@ async function transferFirstNumber() {
 		receipt = await tx.wait();
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		console.log(e);
+		$metatx = {status: 'error', message: 'relayer tx failed'};
 		return false;
 	}
-	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
+	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,uint256,bool,bytes)" , receipt);
 	// console.log(ethers.utils.defaultAbiCoder.decode(['Error(srtring)'],events[0].values[3]));
 	// console.log(ethers.utils.toUtf8String(events[0].values[3]));
 	if(!events[0].values[2]) {
@@ -234,7 +239,8 @@ async function purchaseNumber() {
 	  tokenContract: mtxAddress,
 	  amount: BigNumber.from(purchase_amount).mul('1000000000000000000').toString(),
 	  data: txData.data,
-	  batchNonce: BigNumber.from(purchase_batchId).mul(BigNumber.from(2).mul(128)).add(nonce.add(1)).toHexString(),
+	  batchId: purchase_batchId,
+	  batchNonce: nonce.add(1).toHexString(),
 	  expiry: purchase_expiry,
 	  txGas: purchase_txGas,
 	  baseGas: 100000,
@@ -253,6 +259,7 @@ async function purchaseNumber() {
 		{name:"tokenContract",type:"address"},
 		{name:"amount",type:"uint256"},
 		{name:"data",type:"bytes"},
+		{name:"batchId",type:"uint256"},
 		{name:"batchNonce",type:"uint256"},
 		{name:"expiry",type:"uint256"},
 		{name:"txGas",type:"uint256"},
@@ -299,6 +306,27 @@ async function purchaseNumber() {
 		return false;
 	}
 	// await pause(0.4);
+	if (message.relayer.toLowerCase() != '0x0000000000000000000000000000000000000000' && message.relayer.toLowerCase() != $relayer.address.toLowerCase()) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the message is destined to another relayer'};
+		return false;
+	} 
+
+	if(message.expiry <  Date.now() /1000 ) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the expiry time is in the past'};
+		return false;
+	}else if(message.expiry <  Date.now() / 1000 - 60) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the expiry time is too short'};
+		return false;
+	}
+
+	const actualMetaNonce = await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, purchase_batchId);
+	const expectedBatchNonce = actualMetaNonce.add(1).toHexString();
+	if (expectedBatchNonce != message.batchNonce) {
+		$metatx = {status: 'error', message: 'Relayer will not execute it as the message has the wrong nonce'};
+		return false;
+	}
+	console.log(expectedBatchNonce, message.batchNonce);
+
 	let tx 
 	try {
 		tx = await metaTxProcessor.executeMetaTransaction(
@@ -311,7 +339,8 @@ async function purchaseNumber() {
 			},
 			{
 				tokenContract: message.tokenContract,
-        		amount: message.amount,
+				amount: message.amount,
+				batchId: message.batchId,
         		batchNonce: message.batchNonce,
         		expiry: message.expiry,
         		txGas: message.txGas,
@@ -324,7 +353,8 @@ async function purchaseNumber() {
 		);
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		console.log(e);
+		$metatx = {status: 'error', message: 'relayer tx failed at submission'};
 		return false;
 	}
 	
@@ -335,10 +365,11 @@ async function purchaseNumber() {
 		receipt = await tx.wait();
 	} catch(e) {
 		// TODO error
-		$metatx = {status: 'error', message: 'relayer tx failed'}; // TODO no balance ?
+		console.log(e);
+		$metatx = {status: 'error', message: 'relayer tx failed'};
 		return false;
 	}
-	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,bool,bytes)" , receipt);
+	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,uint256,bool,bytes)" , receipt);
 	if(!events[0].values[2]) {
 		const errorString = errorToAscii(events[0].values[3]);
 		$metatx = {status: 'error', message: 'MetaTx Mined but Error: ' + errorString};
@@ -412,12 +443,13 @@ async function purchaseNumber() {
     <p> fetching account info </p>
 	<hr/>
 	{:else if $account.status == 'Loaded'}
-		<hr/>
+		<!-- <hr/> -->
 		<p>MTX is a token that support our MetaTx standard and can thus be used without any extra step. You can even start interacting with contracts that support the standard and they can even charge tokens (no pre-approval required!).</p>
 		<p>Your MTX Balance:</p>
 		<hr/>
 		<h3 class="center">{$account.mtxBalance.div('1000000000000000') / 1000}</h3>
 		<hr/>
+		<p>Here, for example, you can send a metatx to a NFT sale contract that expect to take from you 1 MTX in exchange of an NFT</p>
 		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 MTX</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
@@ -444,6 +476,7 @@ async function purchaseNumber() {
 		{#if $account.numbers.length}
 		<hr/>
 		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
+		<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of MTX, unless you need to pay the relayer, see advanced settings))</p>
 		<p><input placeholder="address" bind:value={transferTo}/></p>
 		<p><button on:click="{() => transferFirstNumber()}">transfer</button></p>
 		<details>

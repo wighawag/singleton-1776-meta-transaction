@@ -1230,14 +1230,19 @@ if (!Date.now) {
         if(skip.indexOf(method) != -1) {
           return;
         }
-        console.log('method', method);
         var original = console ? console[method] : missingMethod(), i, stackTraceOrig;
         if (!console) { console = {}; } //create empty console if we have no console (IE?)
         console[method] = function () {
           var args = Array.prototype.slice.call(arguments);
           args.original = original;
           args.originalArguments = arguments;
-          args.newMessage = (method === 'assert') ? [args[0], args[1]] : args[0];
+          if (method === 'assert') {
+            args.newMessage = [args[0], args[1]];
+          } else if (args.length > 1) { 
+            args.newMessage = args.join(',');
+          } else {
+            args.newMessage = args[0];
+          }
           //create an Error and get its stack trace and format it
           try { throw new Error(); } catch (e) { stackTraceOrig = e.stack; }
           args.newStackTrace = formatStackTrace(args.newStackTrace, stackTraceOrig);
