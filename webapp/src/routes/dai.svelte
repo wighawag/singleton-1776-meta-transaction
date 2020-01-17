@@ -232,7 +232,7 @@ async function purchaseNumber() {
 	const metaTxProcessorContract = wallet.getContract('GenericMetaTxProcessor');
 	const metaTxProcessorAddress = metaTxProcessorContract.address;
 	const txData = await wallet.computeData('NumberSale', 'purchase', $wallet.address, $wallet.address);
-	const nonce = purchase_nonce ? BigNumber.from(purchase_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, purchase_batchId);
+	const nonce = purchase_nonce ? BigNumber.frm(purchase_nonce) :await wallet.call('GenericMetaTxProcessor', 'meta_nonce', $wallet.address, purchase_batchId);
 
 	const message = {
       from: $wallet.address,
@@ -390,6 +390,7 @@ async function purchaseNumber() {
 async function permitDAI() {
 	const dai = wallet.getContract('DAI');
 	const metaTxProcessorAddress = wallet.getContract('GenericMetaTxProcessor').address;
+	const nonce = await wallet.call('DAI', 'nonces', $wallet.address);
 	const msgParams = JSON.stringify({types:{
       EIP712Domain:[
         {name:"name",type:"string"},
@@ -410,7 +411,7 @@ async function permitDAI() {
     message:{
       holder: $wallet.address,
 	  spender: metaTxProcessorAddress,
-	  nonce: 0, // TODO
+	  nonce: nonce.toHexString(),
 	  expiry: 0,
 	  allowed: true
 	}});
