@@ -10,7 +10,7 @@ Every recipient contract supporting this standard can receive Meta Transaction
 
 Plus, by approving this smart contract on any ERC20 token, recipient can start receiving payments **without themselves being approved first**
 
-As such new ERC20 token can have such contract pre-approved to provide a seamless user experience to their user. Alternatively, they can provide a `permit` call (a la DAI) to provide a similar experience, except for an extra relayed call. See the the [With DAI tab](dai)
+As such new ERC20 token can have such contract pre-approved to provide a seamless user experience to their user. Alternatively, they can provide a `permit` call (a la DAI) to provide a similar experience, except for an extra relayed call.
 
 Here a summary of its distinctive features:
 
@@ -37,9 +37,9 @@ There are roughly 4 type of implementation
 
 While [EIP-1776](https://github.com/ethereum/EIPs/issues/1776) is compatible with any of them, the demo use the singleton proxy pattern. This is for 3 reasons:
 
-*   1) we want to support EOA signer so Account-contract is not an option
-*   2) The whole meta-tx intricacies can be solved in one contract
-*   3) Users and Relayers (that expect refund) only need to trust one implementation
+*   we want to support EOA signer so Account-contract is not an option
+*   The whole meta-tx intricacies can be solved in one contract
+*   Users and Relayers (that expect refund) only need to trust one implementation
 
 ### B) Relayer refund
 
@@ -93,9 +93,9 @@ This allows user to create and submit simultaneously multiple batch of ordered m
 
 In order to avoid the possibilities of relayers submitting 2 meta-tx with the same nonce, at the expense of the relayer getting tis tx included later, the proposal offer a mechanism to avoid it.
 
-Every meta-tx can include a relayer field. This field has 2 purpose, teh obvious one is to limit the message to be used by a specific relayer. the second is to ensure the relayer that if teh tx get included it get a reward for inclusion
+Every meta-tx can include a relayer field. This field has 2 purpose, the obvious one is to limit the message to be used by a specific relayer. the second is to ensure the relayer that if the tx get included it get a reward for inclusion
 
-Relayer can thus reject any meta-tx that do not specify their relayer address so that user are incentivized to only submit one tx at a time, or run the risk of paying teh cost of the extra relayed tyx.
+Relayer can thus reject any meta-tx that do not specify their relayer address so that user are incentivized to only submit one tx at a time, or run the risk of paying the cost of the extra relayed tx.
 
 Of course, if the user got rid of its payment token as part of one of this competing tx, the user remains safe and one of the relayer will not get its refund, so this is not full proof.
 

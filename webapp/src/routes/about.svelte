@@ -84,8 +84,8 @@
 
 <p>In order to avoid the possibilities of relayers submitting 2 meta-tx with the same nonce, at the expense of the relayer getting tis tx included later, the proposal offer a mechanism to avoid it.</p>
 
-<p>Every meta-tx can include a relayer field. This field has 2 purpose, teh obvious one is to limit the message to be used by a specific relayer. the second is to ensure the relayer that if teh tx get included it get a reward for inclusion</p>
-<p>Relayer can thus reject any meta-tx that do not specify their relayer address so that user are incentivized to only submit one tx at a time, or run the risk of paying teh cost of the extra relayed tyx.</p>
+<p>Every meta-tx can include a relayer field. This field has 2 purpose, the obvious one is to limit the message to be used by a specific relayer. the second is to ensure the relayer that if the tx get included it get a reward for inclusion</p>
+<p>Relayer can thus reject any meta-tx that do not specify their relayer address so that user are incentivized to only submit one tx at a time, or run the risk of paying the cost of the extra relayed tyx.</p>
 
 <p>Of course, if the user got rid of its payment token as part of one of this competing tx, the user remains safe and one of the relayer will not get its refund, so this is not full proof.</p>
 
