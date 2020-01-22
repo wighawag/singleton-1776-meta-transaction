@@ -429,7 +429,7 @@ async function purchaseNumber() {
 </svelte:head>
 
 <h2 class="center">Meta Tx Demo</h2>
-<p>Welcome to the Take Back The Web Hackathon Demo For a Meta Transaction Standard</p>
+<p>Welcome to the <a href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
 <p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a href="about">here</a>.</p>
 <hr/>
 <WalletWrapper>
