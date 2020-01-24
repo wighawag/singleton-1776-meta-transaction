@@ -285,4 +285,15 @@ contract GenericMetaTxProcessor is ERC1271Constants, ERC1654Constants {
     function meta_nonce(address from, uint256 batchId) external view returns(uint256) {
         return batches[from][batchId];
     }
+
+    function batch(address from, address[] calldata tos, bytes[] calldata datas, uint256[] calldata gas) external {
+        require(msg.sender == address(this), "can only be executed by the meta tx processor");
+        for(uint256 i = 0; i < tos.length; i++) {
+            require(
+                BytesUtil.doFirstParamEqualsAddress(datas[i], from),
+                "first param != from"
+            );
+            _executeWithSpecificGas(tos[i], gas[i], datas[i]);
+        }
+    }
 }
