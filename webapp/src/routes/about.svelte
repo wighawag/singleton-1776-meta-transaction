@@ -79,8 +79,13 @@
 <p><a href="https://github.com/ethereum/EIPs/issues/1776">EIP-1776</a>provide a 2 dimensional nonce system allowing user to group meta-tx in batches independently of each other</p>
 <p>This allows user to create and submit simultaneously multiple batch of ordered meta-tx</p>
 
+<h2>Batching call in one meta-txn</h2>
+While the batch/nonce feature allow you to batch tx in order and keep your ability to create transaction that have high gas requirement, they still require user to sign multiple meta-transaction and wait for the relayers to submit all of them.
+We added a special function in the processor that can be invoked as a meta-transaction itself so users can batch multiple calls in one meta-tx without any change to EIP-1776 format.
+They simply make a sign message with the call data and destination (and gas) for each call they want to make and submit this as a call to that specific function.
+see <a href="https://github.com/wighawag/singleton-1776-meta-transaction/blob/24fe66e0c40f7c4b2d23b29994e7ef3b3a5f29e2/contracts/src/GenericMetaTxProcessor.sol#L289">here</a>
 
-<h2>Multi Relayer Coordination</h2>
+<h2>Multi Relayer Coordination</h2>*
 
 <p>In order to avoid the possibilities of relayers submitting 2 meta-tx with the same nonce, at the expense of the relayer getting tis tx included later, the proposal offer a mechanism to avoid it.</p>
 
