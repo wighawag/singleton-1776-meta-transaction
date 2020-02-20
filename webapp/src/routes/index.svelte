@@ -209,12 +209,11 @@ async function transferFirstNumber() {
 		$metatx = {status: 'error', message: 'relayer tx failed'};
 		return false;
 	}
-	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,uint256,bool,bytes)" , receipt);
-	// console.log(ethers.utils.defaultAbiCoder.decode(['Error(srtring)'],events[0].values[3]));
-	// console.log(ethers.utils.toUtf8String(events[0].values[3]));
-	if(!events[0].values[2]) {
-		console.log(errorToAscii(events[0].values[3]));
+	const metaTxEvent = receipt.events.find((event) => event.event === 'MetaTx' && event.address === metaTxProcessor.address);
+	if (!metaTxEvent.args[2]){
+		console.log(errorToAscii(metaTxEvent.args[3]));	
 	}
+	
 	console.log(receipt);
 	account.refresh();
 	$metatx = {status: 'txConfirmed'};
@@ -369,9 +368,9 @@ async function purchaseNumber() {
 		$metatx = {status: 'error', message: 'relayer tx failed'};
 		return false;
 	}
-	const events = await getEventsFromReceipt(provider, metaTxProcessor,"MetaTx(address,uint256,uint256,bool,bytes)" , receipt);
-	if(!events[0].values[2]) {
-		const errorString = errorToAscii(events[0].values[3]);
+	const metaTxEvent = receipt.events.find((event) => event.event === 'MetaTx' && event.address === metaTxProcessor.address);
+	if (!metaTxEvent.args[2]){
+		const errorString = errorToAscii(metaTxEvent.args[3]);
 		$metatx = {status: 'error', message: 'MetaTx Mined but Error: ' + errorString};
 		return false;
 	}
