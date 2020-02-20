@@ -1518,80 +1518,45 @@ eth-query@^2.1.0:
     json-rpc-random-id "^1.0.0"
     xtend "^4.0.1"
 
-ethers@5.0.0-beta.156:
-  version "5.0.0-beta.156"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.0-beta.156.tgz#dea860455863f9c35b71a97c5b62fac415eedf08"
-  integrity sha512-xgat1HpvhulExN49w/5gad71/MA9g8OLQXObX4VTKZf4OR5+03W6zbGY45vWrj3MFB8lZWHqjD1annkRUkcqMQ==
-  dependencies:
-    "@ethersproject/abi" ">=5.0.0-beta.137"
-    "@ethersproject/abstract-provider" ">=5.0.0-beta.131"
-    "@ethersproject/abstract-signer" ">=5.0.0-beta.132"
-    "@ethersproject/address" ">=5.0.0-beta.128"
-    "@ethersproject/base64" ">=5.0.0-beta.126"
-    "@ethersproject/bignumber" ">=5.0.0-beta.130"
-    "@ethersproject/bytes" ">=5.0.0-beta.129"
-    "@ethersproject/constants" ">=5.0.0-beta.128"
-    "@ethersproject/contracts" ">=5.0.0-beta.137"
-    "@ethersproject/hash" ">=5.0.0-beta.128"
-    "@ethersproject/hdnode" ">=5.0.0-beta.130"
-    "@ethersproject/json-wallets" ">=5.0.0-beta.129"
-    "@ethersproject/keccak256" ">=5.0.0-beta.127"
-    "@ethersproject/logger" ">=5.0.0-beta.129"
-    "@ethersproject/networks" ">=5.0.0-beta.129"
-    "@ethersproject/pbkdf2" ">=5.0.0-beta.127"
-    "@ethersproject/properties" ">=5.0.0-beta.131"
-    "@ethersproject/providers" ">=5.0.0-beta.141"
-    "@ethersproject/random" ">=5.0.0-beta.128"
-    "@ethersproject/rlp" ">=5.0.0-beta.126"
-    "@ethersproject/sha2" ">=5.0.0-beta.129"
-    "@ethersproject/signing-key" ">=5.0.0-beta.129"
-    "@ethersproject/solidity" ">=5.0.0-beta.126"
-    "@ethersproject/strings" ">=5.0.0-beta.130"
-    "@ethersproject/transactions" ">=5.0.0-beta.128"
-    "@ethersproject/units" ">=5.0.0-beta.127"
-    "@ethersproject/wallet" ">=5.0.0-beta.130"
-    "@ethersproject/web" ">=5.0.0-beta.129"
-    "@ethersproject/wordlists" ">=5.0.0-beta.128"
-
-ethers@^5.0.0-beta.158:
-  version "5.0.0-beta.166"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.0-beta.166.tgz#c1bcd7aa0ec3ff956714f18afdee6ed7a3094795"
-  integrity sha512-O796Gpld0wil6J0aomfeiDHxFi9tyGSVdzDtPI0raNgNDYKTDUhIsNc9IGiZCjBh1H4af0ehZHXJxRoSU+Ogpg==
-  dependencies:
-    "@ethersproject/abi" ">=5.0.0-beta.137"
-    "@ethersproject/abstract-provider" ">=5.0.0-beta.131"
-    "@ethersproject/abstract-signer" ">=5.0.0-beta.132"
-    "@ethersproject/address" ">=5.0.0-beta.128"
-    "@ethersproject/base64" ">=5.0.0-beta.126"
-    "@ethersproject/bignumber" ">=5.0.0-beta.130"
-    "@ethersproject/bytes" ">=5.0.0-beta.129"
-    "@ethersproject/constants" ">=5.0.0-beta.128"
-    "@ethersproject/contracts" ">=5.0.0-beta.137"
-    "@ethersproject/hash" ">=5.0.0-beta.128"
-    "@ethersproject/hdnode" ">=5.0.0-beta.130"
-    "@ethersproject/json-wallets" ">=5.0.0-beta.129"
-    "@ethersproject/keccak256" ">=5.0.0-beta.127"
-    "@ethersproject/logger" ">=5.0.0-beta.129"
-    "@ethersproject/networks" ">=5.0.0-beta.129"
-    "@ethersproject/pbkdf2" ">=5.0.0-beta.127"
-    "@ethersproject/properties" ">=5.0.0-beta.131"
-    "@ethersproject/providers" ">=5.0.0-beta.141"
-    "@ethersproject/random" ">=5.0.0-beta.128"
-    "@ethersproject/rlp" ">=5.0.0-beta.126"
-    "@ethersproject/sha2" ">=5.0.0-beta.129"
-    "@ethersproject/signing-key" ">=5.0.0-beta.129"
-    "@ethersproject/solidity" ">=5.0.0-beta.126"
-    "@ethersproject/strings" ">=5.0.0-beta.130"
-    "@ethersproject/transactions" ">=5.0.0-beta.128"
-    "@ethersproject/units" ">=5.0.0-beta.127"
-    "@ethersproject/wallet" ">=5.0.0-beta.130"
-    "@ethersproject/web" ">=5.0.0-beta.129"
-    "@ethersproject/wordlists" ">=5.0.0-beta.128"
-
 ethers@^5.0.0-beta.159:
   version "5.0.0-beta.167"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.0-beta.167.tgz#769a600f48e6152457e0a6240af759101031fec9"
   integrity sha512-gU4lAW7jL4vjqxjAB74GkhIN7AcIyZorJE3TNbWOlNMML2sRHQ8dFw81lRnm21JSHgEzNpCFc/8kHNQqkShOKA==
+  dependencies:
+    "@ethersproject/abi" ">=5.0.0-beta.137"
+    "@ethersproject/abstract-provider" ">=5.0.0-beta.131"
+    "@ethersproject/abstract-signer" ">=5.0.0-beta.132"
+    "@ethersproject/address" ">=5.0.0-beta.128"
+    "@ethersproject/base64" ">=5.0.0-beta.126"
+    "@ethersproject/bignumber" ">=5.0.0-beta.130"
+    "@ethersproject/bytes" ">=5.0.0-beta.129"
+    "@ethersproject/constants" ">=5.0.0-beta.128"
+    "@ethersproject/contracts" ">=5.0.0-beta.137"
+    "@ethersproject/hash" ">=5.0.0-beta.128"
+    "@ethersproject/hdnode" ">=5.0.0-beta.130"
+    "@ethersproject/json-wallets" ">=5.0.0-beta.129"
+    "@ethersproject/keccak256" ">=5.0.0-beta.127"
+    "@ethersproject/logger" ">=5.0.0-beta.129"
+    "@ethersproject/networks" ">=5.0.0-beta.129"
+    "@ethersproject/pbkdf2" ">=5.0.0-beta.127"
+    "@ethersproject/properties" ">=5.0.0-beta.131"
+    "@ethersproject/providers" ">=5.0.0-beta.141"
+    "@ethersproject/random" ">=5.0.0-beta.128"
+    "@ethersproject/rlp" ">=5.0.0-beta.126"
+    "@ethersproject/sha2" ">=5.0.0-beta.129"
+    "@ethersproject/signing-key" ">=5.0.0-beta.129"
+    "@ethersproject/solidity" ">=5.0.0-beta.126"
+    "@ethersproject/strings" ">=5.0.0-beta.130"
+    "@ethersproject/transactions" ">=5.0.0-beta.128"
+    "@ethersproject/units" ">=5.0.0-beta.127"
+    "@ethersproject/wallet" ">=5.0.0-beta.130"
+    "@ethersproject/web" ">=5.0.0-beta.129"
+    "@ethersproject/wordlists" ">=5.0.0-beta.128"
+
+ethers@^5.0.0-beta.173:
+  version "5.0.0-beta.173"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.0-beta.173.tgz#114832457dd9d768fae3da93651f9e818c508231"
+  integrity sha512-wAj6vYXL6Kgm6baLCZRJukMo/4DmHe7lMd0xLZhtc7PJbgJwiTGwjfpGxLSoj0EWFh69o0TXVQ0PDNgvfWjDyw==
   dependencies:
     "@ethersproject/abi" ">=5.0.0-beta.137"
     "@ethersproject/abstract-provider" ">=5.0.0-beta.131"
@@ -3580,12 +3545,12 @@ svelte-loader@^2.9.0:
     loader-utils "^1.1.0"
     svelte-dev-helper "^1.1.9"
 
-svelte-wallet@^0.1.11:
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/svelte-wallet/-/svelte-wallet-0.1.11.tgz#ecbe937c3f059b0092b8301f1d09259bb0163f6b"
-  integrity sha512-+dMbkznRqlPe6ogZ9lmIyn3HElvSYwYjseI7dlrHm2G7jeRyX5nZyBLSN4p1mrh5Do50LLp0cf4nCfaJVllVug==
+svelte-wallet@^0.1.25:
+  version "0.1.25"
+  resolved "https://registry.yarnpkg.com/svelte-wallet/-/svelte-wallet-0.1.25.tgz#5bdc2778eca0d5a51dedb832b25a692511031b14"
+  integrity sha512-HhGWdd9jm5tknxq08X2TtQYIP/09vzYTmkPmHyCwkPSo9ilWlDB9jUGT2AbUzly9bwpF527JQ7rnSUnntlGBWQ==
   dependencies:
-    ethers "^5.0.0-beta.158"
+    ethers "^5.0.0-beta.173"
 
 svelte@^3.0.0:
   version "3.16.7"
