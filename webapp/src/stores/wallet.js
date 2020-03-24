@@ -46,6 +46,9 @@ import('contractsInfo').then((contractsInfo) => {
             chainId = chainId || $wallet.chainId;
             if (contractsInfo[chainId]) {
                 contractData.contractsInfo = contractsInfo[chainId];
+                for (const key of Object.keys(contractsInfo[chainId])) {
+                    contractsInfo[chainId][key].contractInfo = {abi: contractsInfo[chainId][key].abi}; // TODO svelte-wallet update
+                }
                 return contractsInfo[chainId];
             }
             throw new Error('no contract for chainId ' + chainId);

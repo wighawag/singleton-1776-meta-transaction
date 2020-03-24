@@ -6,14 +6,13 @@
   "repository": "https://github.com/wighawag/generic-meta-transaction",
   "author": "wighawag",
   "license": "GPL",
-  "dependencies": {
-    "ganache-core": "^2.10.2",
-    "rocketh": "^0.4.34",
-    "solc": "^0.6.1"
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.2.0",
+    "buidler-deploy": "^0.0.2"
   },
   "scripts": {
-    "dev": "rocketh launch -kq ../webapp/src/dev_contractsInfo.json",
-    "deploy-rinkeby": "rocketh launch -n https://rinkeby.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4 -q ../webapp/src/contractsInfo.json",
-    "deploy-goerli": "rocketh launch -n https://goerli.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4 -q ../webapp/src/contractsInfo.json"
+    "dev": "buidler node --export ../webapp/src/dev_contractsInfo.json",
+    "deploy-rinkeby": "buidler deploy --network rinkeby --export ../webapp/src/contractsInfo.json",
+    "deploy-goerli": "buidler deploy --network goerli --export ../webapp/src/contractsInfo.json"
   }
 }
