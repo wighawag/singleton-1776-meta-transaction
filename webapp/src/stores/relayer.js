@@ -80,7 +80,7 @@ const store = derived(wallet, async ($wallet, set) => {
             url = 'https://kovan.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4';
         } else {
             url = 'http://localhost:8545'; // TODO have more check if we support other
-            chainIdToUse = 1; // TODO ganache config ?
+            // chainIdToUse = 1; // TODO ganache config ?
         }
         const txField = 'tx_on_chain_' + chainId;
         // const provider = wallet.getFallbackProvider();
