@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "description": "Generic Meta Transaction Processor",
   "main": "index.js",
-  "repository": "https://github.com/wighawag/generic-meta-transaction",
+  "repository": "https://github.com/wighawag/singleton-1776-meta-transaction",
   "author": "wighawag",
   "license": "GPL",
   "devDependencies": {
     "@nomiclabs/buidler": "^1.2.0",
-    "buidler-deploy": "^0.0.5"
+    "buidler-deploy": "^0.0.7"
   },
   "scripts": {
     "dev": "buidler listen --export ../webapp/src/dev_contractsInfo.json",
