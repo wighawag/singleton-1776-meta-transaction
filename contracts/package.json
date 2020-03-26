@@ -8,7 +8,7 @@
   "license": "GPL",
   "devDependencies": {
     "@nomiclabs/buidler": "^1.2.0",
-    "buidler-deploy": "^0.0.7"
+    "buidler-deploy": "^0.0.9"
   },
   "scripts": {
     "dev": "buidler listen --export ../webapp/src/dev_contractsInfo.json",
