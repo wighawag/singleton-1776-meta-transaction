@@ -2,13 +2,14 @@
   "name": "singleton-1776-meta-transaction-subgraph",
   "version": "0.1.0",
   "scripts": {
-    "create-local-graph": "graph create testing/testing --node http://127.0.0.1:8020",
+    "create-local-graph": "wait-on http-get://127.0.0.1:8000 && graph create testing/testing --node http://127.0.0.1:8020",
     "codegen-graph": "graph codegen",
     "build-graph": "graph build",
-    "deploy-local-graph": "graph deploy testing/testing --ipfs http://localhost:5001 --node http://127.0.0.1:8020"
+    "deploy-local-graph": "wait-on http://127.0.0.1:5001/api/v0/version http-get://127.0.0.1:8000 && graph deploy testing/testing --ipfs http://localhost:5001 --node http://127.0.0.1:8020"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.16.0",
-    "@graphprotocol/graph-ts": "^0.16.0"
+    "@graphprotocol/graph-ts": "^0.16.0",
+    "wait-on": "^4.0.1"
   }
 }

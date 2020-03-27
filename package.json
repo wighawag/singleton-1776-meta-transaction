@@ -3,12 +3,25 @@
   "version": "0.0.1",
   "license": "GPL",
   "scripts": {
+    "externals-down": "docker-compose down -v",
+    "externals": "docker-compose up",
+    "shell:externals": "newshell \"npm run externals\"",
+    "create-local-graph": "npm --prefix subgraph run create-local-graph",
+    
+    "deploy-local": "npm-run-all -l deploy-local-contracts deploy-local-graph",
+    "deploy-local-contracts": "npm --prefix contracts run deploy:local",
+    "deploy-local-graph": "npm --prefix subgraph run deploy-local-graph",
+    
     "webapp": "npm --prefix webapp run dev",
-    "contracts": "npm --prefix contracts run dev",
     "shell:webapp": "newshell \"npm run webapp\"",
+
+    "contracts": "npm --prefix contracts run dev",
     "shell:contracts": "newshell \"npm run contracts\"",
-    "shell:dev": "npm-run-all --parallel shell:webapp shell:contracts",
-    "dev": "npm-run-all -l --parallel webapp contracts"
+    
+    "setup": "npm-run-all -l externals-down --parallel shell:webapp shell:externals create-local-graph",
+    
+    "dev": "npm-run-all -l externals-down --parallel webapp externals --sequential create-local-graph deploy-local",
+    "shell:dev": "npm-run-all -l externals-down --parallel shell:webapp shell:externals --sequential create-local-graph deploy-local"
   },
   "devDependencies": {
     "newshell": "^0.1.0",
