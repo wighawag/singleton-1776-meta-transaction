@@ -1,0 +1,5 @@
+type Numbers @entity {
+  id: ID!
+  owner: Bytes!
+  timestamp: BigInt!
+}

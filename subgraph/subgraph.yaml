@@ -1,0 +1,24 @@
+specVersion: 0.0.2
+description: Tokens
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Numbers
+    network: mainnet
+    source:
+      address: '{Numbers.address}'
+      abi: NumbersContract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Numbers
+      abis:
+        - name: NumbersContract
+          file: ./abis/NumbersContract.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/mapping.ts
