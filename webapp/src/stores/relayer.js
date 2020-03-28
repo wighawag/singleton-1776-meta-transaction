@@ -85,9 +85,23 @@ const store = derived(wallet, async ($wallet, set) => {
         const txField = 'tx_on_chain_' + chainId;
         // const provider = wallet.getFallbackProvider();
         provider = new ethers.providers.JsonRpcProvider(url); // Why cannot we use the builtin provider (metamask?)
+        const genesisBlock = await provider.getBlock(0);
+        let waitingTx = false;
+        let tx;
         if ($data[txField]) {
-            const tx = await provider.getTransaction($data[txField]);
-            if (tx.blockHash) {
+            const txHash = $data[txField];
+            tx = await provider.getTransaction(txHash);
+            waitingTx = true;
+            if (!tx) {
+                if(genesisBlock.hash !== $data.genesisBlock){
+                    console.log('new chain with same chainId detected');
+                    waitingTx = false;
+                    // TODO delete fields
+                }
+            }
+        }
+        if (waitingTx) {
+            if (tx && tx.blockHash) {
                 const currentBalance = await provider.getBalance($data.address);
                 if (currentBalance.lt('1000000000000000')) {
                     _set({ status: 'Error', message: 'relayer balance too low, please send ETH to ' + $data.address});     
@@ -98,13 +112,16 @@ const store = derived(wallet, async ($wallet, set) => {
                 let mined = false;
                 while(!mined) {
                     await pause(2);
-                    const tx = await provider.getTransaction($data.fundingTx);
+                    const tx = await provider.getTransaction(txHash);
                     // TODO Error
-                    mined = !!tx.blockHash;
+                    if(tx) {
+                        mined = !!(tx.blockHash);
+                    } else {
+                        console.log('no tx with hash: ' + txHash)
+                    }
                 }
                 _set({ status: 'Loaded' });  
-            }
-            
+            }        
         } else {
             const privateKey = '0xf912c020908da6935d420274cb1fa5fe609296ee3898bc190608a8d836463e27';
             const funderWallet = new Wallet(BigNumber.from(privateKey).sub(1).toHexString()); // just to prevent bot
@@ -123,6 +140,7 @@ const store = derived(wallet, async ($wallet, set) => {
                 
                 let txObject = {};
                 txObject[txField] = tx.hash;
+                txObject.genesisBlock = genesisBlock.hash;
                 _set(txObject);
                 const receipt = await tx.wait();
                 console.log('FUNDING RECEIPT', receipt);
