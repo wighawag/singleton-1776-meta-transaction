@@ -4,74 +4,13 @@ import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
 </script>
 
-<style>
-/* The Modal (background) */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgb(0,0,0); /* Fallback color */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-}
-
-/* Modal Content/Box */
-.modal-content {
-  text-align:center;
-  background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
-}
-
-/* The Close Button */
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-h3 {
-    text-align: center;
-}
-p {
-    text-align: center;
-}
-.wrapper {
-    text-align: center;
-}
-.wrapper ul {
-    display: inline-block;
-    margin: 0;
-    padding: 0;
-    /* For IE, the outcast */
-    zoom:1;
-    *display: inline;
-}
-.wrapper li {
-    padding: 2px 5px;
-}
-</style>
 {#if $wallet.status == 'Loading'}
 <br/>
     <h3> Please wait... </h3>
 {:else if $wallet.status == 'Locked'}
 <br/>
     <p>This demo requires you to have a wallet compatible with the EIP-712 standard. Please note that this has been tested only on Metamask.</p>
-    <p><button on:click="{wallet.unlock}">Connect your wallet</button></p>
+    <p><button class="button" on:click="{wallet.unlock}">Connect your wallet</button></p>
 {:else if $wallet.status == 'Unlocking'}
 <br/>
     <h3> Please accept the connection request </h3>
@@ -85,17 +24,17 @@ p {
 <br/>
     <h3 class="errorTitle"> You are using Opera </h3>
     <h5 class="errorMessage">You need to set up your wallet. if a popup did not come up you'll need to go into Opera setting to set it up.</h5>
-    <button on:click="{() => wallet.retry()}">Retry</button>    
+    <button class="button" on:click="{() => wallet.retry()}">Retry</button>    
 {:else if $wallet.status == 'Opera_Locked'}
 <br/>
     <h3 class="errorTitle"> You are using Opera </h3>
     <h5 class="errorMessage"> You need to authorize access to your wallet. </h5>
-    <button on:click="{() => wallet.retry()}">Request Access</button>
+    <button class="button" on:click="{() => wallet.retry()}">Request Access</button>
 {:else if $wallet.status == 'Error'}
 <br/>
     <h3 class="errorTitle"> There were an Error </h3>
     <h5 class="errorMessage">{$wallet.error.message}</h5>
-    <button on:click="{() => wallet.retry()}">Retry</button>
+    <button class="button" on:click="{() => wallet.retry()}">Retry</button>
 {:else if $wallet.status == 'Ready'}
     {#if $wallet.chainNotSupported}
     <br/>
@@ -114,7 +53,7 @@ p {
         {/if}
         {#if $wallet.requireManualChainReload }
             <h5 class="errorMessage">You might need to reload the page after switching to the new chain</h5>
-            <button on:click="{() => wallet.reloadPage()}">Reload</button>
+            <button class="button" on:click="{() => wallet.reloadPage()}">Reload</button>
         {/if}
     {:else if typeof $wallet.initialBalance !== 'undefined' && $wallet.initialBalance == 0}
     <br/>

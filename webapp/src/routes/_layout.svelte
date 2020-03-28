@@ -1,22 +1,20 @@
 <script>
+	import Tailwindcss from '../components/Tailwindcss.svelte';
 	import Nav from '../components/Nav.svelte';
 
 	export let segment;
 </script>
 
-<style>
-	main {
-		position: relative;
-		max-width: 56em;
-		background-color: white;
-		padding: 2em;
-		margin: 0 auto;
-		box-sizing: border-box;
+<Tailwindcss />
+<style global >
+	.button {
+		/* hover:text-white hover:bg-purple-500 */
+		@apply text-purple-500 border border-purple-500 text-xs font-semibold rounded-full px-4 py-1 leading-normal
 	}
 </style>
 
 <Nav {segment}/>
 
-<main>
+<main class="container mx-auto">
 	<slot></slot>
 </main>

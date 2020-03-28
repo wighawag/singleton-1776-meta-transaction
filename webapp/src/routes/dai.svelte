@@ -487,43 +487,6 @@ async function permitDAI() {
 }
 </script>
 
-<style>
-	h1, figure, p {
-		text-align: center;
-		margin: 0 auto;
-	}
-
-	h1 {
-		font-size: 2.8em;
-		text-transform: uppercase;
-		font-weight: 700;
-		margin: 0 0 0.5em 0;
-	}
-
-	figure {
-		margin: 0 0 1em 0;
-	}
-
-	img {
-		width: 100%;
-		max-width: 400px;
-		margin: 0 0 1em 0;
-	}
-
-	p {
-		margin: 1em auto;
-	}
-
-	.center {
-		text-align:center;
-	}
-
-	@media (min-width: 480px) {
-		h1 {
-			font-size: 4em;
-		}
-	}
-</style>
 
 <svelte:head>
 	<title>Meta Tx Demo</title>
@@ -552,7 +515,7 @@ async function permitDAI() {
 		<h3 class="center">{$account.daiBalance.div('1000000000000000') / 1000}</h3>
 		<hr/>
 		<p>Here, you can send a metatx to a NFT sale contract that expect to take from you 1 DAI in exchange of an NFT</p>
-		<p><button on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
+		<p><button class="button" on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
 			<label>DAI amount</label><input type="number" bind:value={purchase_amount}/><br/>
@@ -570,7 +533,7 @@ async function permitDAI() {
 		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
 		<p>Since DAI was created before such proposal, you would need to first approve your token to be used by the meta transaction processor.
 		Fortunately, DAI allow us to do that with a simple signature (via permit call)</p>
-		<p><button on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
+		<p><button class="button" on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
 		{/if}
 		<br/>
 		<br/>
@@ -589,7 +552,7 @@ async function permitDAI() {
 		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
 		<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of DAI, unless you need to pay the relayer, see advanced settings)</p>
 		<p><input placeholder="address" bind:value={transferTo}/></p>
-		<p><button on:click="{() => transferFirstNumber()}">transfer</button></p>
+		<p><button class="button" on:click="{() => transferFirstNumber()}">transfer</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
 			<label>DAI amount</label><input type="number" bind:value={transfer_amount}/><br/>
@@ -606,7 +569,7 @@ async function permitDAI() {
 		<hr/>
 		<p>And you can of course transfer DAI</p>
 		<p><input placeholder="address" bind:value={transferTo}/></p>
-		<p><button on:click="{() => transferDAI()}">send 0.5 DAI to someone</button></p>
+		<p><button class="button" on:click="{() => transferDAI()}">send 0.5 DAI to someone</button></p>
 		<details>
 			<summary>advanced Meta Tx settings</summary>
 			<label>DAI amount</label><input type="number" bind:value={dai_transfer_amount}/><br/>
