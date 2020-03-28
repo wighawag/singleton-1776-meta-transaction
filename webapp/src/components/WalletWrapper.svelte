@@ -2,6 +2,9 @@
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
+
+$: showModal = ($wallet && $wallet.status && $wallet.status !== 'Loading' && ((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none'));
+
 </script>
 
 {#if $wallet.status == 'Loading'}
@@ -67,31 +70,67 @@ import relayer from '../stores/relayer';
     {/if}
 {/if}
 
-<div id="myModal" class="modal" style="display:{((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}">
-    <!-- Modal content -->
-    {#if !$wallet.chainNotSupported && $relayer.status == 'Error'}
-        <div class="modal-content">
-        <p>Unfortunately the fund for the relayers run has run out. If you can help please fund that address : {$relayer.funderAddress} and reload</p>
-        </div>
-    {:else if $metatx.status == 'error'}
-        <div class="modal-content">
-        <span class="close" on:click="{() => $metatx.status = 'none'}">&times;</span>
-        <p>{$metatx.message}</p>
-        </div>
-    {:else}
-        <div class="modal-content">
-            {#if $metatx.status == 'submitting'}
-            <p>submiting to relayer...</p>
-            {:else if $metatx.status == 'waitingRelayer'}
-            <p>waiting for relayer...</p>
-            {:else if $metatx.status == 'txBroadcasted'}
-            <p>waiting for relay tx to be mined (it can take a while)...</p>
-            {:else if $metatx.status == 'txConfirmed'}
-            <p>tx confirmed, please wait...</p>
-            {:else}
-            <p>Please accept signature</p>
-            {/if}
-        </div>
-    {/if}
-</div>
 
+<!-- style="display:{((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none') ? 'block' : 'none'}" -->
+<!-- "{!((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none')}" -->
+<!-- class:hidden="{true}" -->
+{#if showModal}
+<div class="fixed bottom-0 inset-x-0 px-4 pb-6 sm:inset-0 sm:p-0 sm:flex sm:items-center sm:justify-center">
+    <div class="fixed inset-0 transition-opacity">
+      <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+    </div>
+  
+    <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-sm sm:w-full sm:p-6">
+      <!-- <div>
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div> -->
+        <div class="mt-3 text-center sm:mt-5">
+            {#if !$wallet.chainNotSupported && $relayer.status == 'Error'}
+                <div class="modal-content">
+                <p>Unfortunately the fund for the relayers run has run out. If you can help please fund that address : {$relayer.funderAddress} and reload</p>
+                </div>
+            {:else if $metatx.status == 'error'}
+                <div class="modal-content">
+                <p>{$metatx.message}</p>
+                </div>
+            {:else}
+                <div class="modal-content">
+                    {#if $metatx.status == 'submitting'}
+                    <p>submiting to relayer...</p>
+                    {:else if $metatx.status == 'waitingRelayer'}
+                    <p>waiting for relayer...</p>
+                    {:else if $metatx.status == 'txBroadcasted'}
+                    <p>waiting for relay tx to be mined (it can take a while)...</p>
+                    {:else if $metatx.status == 'txConfirmed'}
+                    <p>tx confirmed, please wait...</p>
+                    {:else}
+                    <p>Please accept signature</p>
+                    {/if}
+                </div>
+            {/if}
+          <!-- <h3 class="text-lg leading-6 font-medium text-gray-900">
+            Payment successful
+          </h3>
+          <div class="mt-2">
+            <p class="text-sm leading-5 text-gray-500">
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur amet labore.
+            </p>
+          </div> -->
+        <!-- </div> -->
+      </div>
+      {#if $metatx.status == 'error'}
+      <div class="mt-5 sm:mt-6">
+        <span class="flex w-full rounded-md shadow-sm">
+          <button on:click="{() => $metatx.status = 'none'}" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-red-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-red-500 focus:outline-none focus:border-red-700 focus:shadow-outline-red transition ease-in-out duration-150 sm:text-sm sm:leading-5">
+            OK
+          </button>
+        </span>
+      </div>
+      {/if}
+      
+    </div>
+</div>
+{/if}

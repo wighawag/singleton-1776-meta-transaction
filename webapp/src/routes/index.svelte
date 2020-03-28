@@ -399,19 +399,14 @@ async function purchaseNumber() {
 	</div>
 </div>
 
-<WalletWrapper>
-    <!-- <figure>
-        <img alt='Borat' src='great-success.png'>
-        <figcaption>HIGH FIVE!</figcaption>
-	</figure> -->
-	
-	<div class="bg-gray-200 overflow-hidden rounded-lg">
-		<div class="px-4 py-5 sm:p-6">	
-			<p>Welcome to the <a class="underline" href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
-			<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a class="underline" href="about">here</a>.</p>		
-		</div>
+<div class="bg-gray-200 overflow-hidden rounded-lg">
+	<div class="px-4 py-5 sm:p-6">	
+		<p>Welcome to the <a class="underline" href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
+		<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a class="underline" href="about">here</a>.</p>		
 	</div>
-	
+</div>
+
+<WalletWrapper>
 	{#if $account.status == 'Loading'}
 		<p> fetching account info </p>
 	{:else if $account.status == 'Loaded'}
