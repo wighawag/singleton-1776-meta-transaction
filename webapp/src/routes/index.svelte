@@ -2,6 +2,7 @@
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
+import SettingsOption from '../components/SettingsOption';
 import WalletWrapper from '../components/WalletWrapper';
 import account from '../stores/account';
 import * as ethers from 'ethers';
@@ -13,7 +14,7 @@ let purchase_amount = 1;
 let purchase_expiry = 1610600198;
 let purchase_txGas = 1000000;
 let purchase_batchId = 0;
-let purchase_nonce = undefined;
+let purchase_nonce = null;
 let purchase_tokenGasPrice = 0;
 let purchase_relayer = "0x0000000000000000000000000000000000000000";
 
@@ -21,7 +22,7 @@ let transfer_amount = 0;
 let transfer_expiry = 1610600198;
 let transfer_txGas = 1000000;
 let transfer_batchId = 0;
-let transfer_nonce = undefined;
+let transfer_nonce = null;
 let transfer_tokenGasPrice = 0;
 let transfer_relayer = "0x0000000000000000000000000000000000000000";
 
@@ -390,67 +391,140 @@ async function purchaseNumber() {
 	<title>Meta Tx Demo</title>
 </svelte:head>
 
-<h2 class="center">Meta Tx Demo</h2>
-<p>Welcome to the <a href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
-<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a href="about">here</a>.</p>
-<hr/>
+<div class="md:flex md:items-center md:justify-between m-5">
+	<div class="flex-1 min-w-0">
+		<h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncate">
+			EIP-1776 Meta Transaction Demo
+		</h2>
+	</div>
+</div>
+
 <WalletWrapper>
     <!-- <figure>
         <img alt='Borat' src='great-success.png'>
         <figcaption>HIGH FIVE!</figcaption>
-    </figure> -->
+	</figure> -->
+	
+	<div class="bg-gray-200 overflow-hidden rounded-lg">
+		<div class="px-4 py-5 sm:p-6">	
+			<p>Welcome to the <a class="underline" href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
+			<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a class="underline" href="about">here</a>.</p>		
+		</div>
+	</div>
 	
 	{#if $account.status == 'Loading'}
-	<hr/>
-    <p> fetching account info </p>
-	<hr/>
+		<p> fetching account info </p>
 	{:else if $account.status == 'Loaded'}
-		<!-- <hr/> -->
-		<p>MTX is a token that support our MetaTx standard and can thus be used without any extra step. You can even start interacting with contracts that support the standard and they can even charge tokens (no pre-approval required!).</p>
-		<p>Your MTX Balance:</p>
-		<hr/>
-		<h3 class="center">{$account.mtxBalance.div('1000000000000000') / 1000}</h3>
-		<hr/>
-		<p>Here, for example, you can send a metatx to a NFT sale contract that expect to take from you 1 MTX in exchange of an NFT</p>
-		<p><button class="button" on:click="{() => purchaseNumber()}">buy a Number for 1 MTX</button></p>
-		<details>
-			<summary>advanced Meta Tx settings</summary>
-			<label>MTX amount</label><input type="number" bind:value={purchase_amount}/><br/>
-			<label>expiry</label><input type="datetime" bind:value={purchase_expiry}/><br/>
-			<label>txGas</label><input type="number" bind:value={purchase_txGas}/><br/>
-			<label>batchId</label><input type="number" bind:value={purchase_batchId}/><br/>
-			<label>nonce</label><input type="number" bind:value={purchase_nonce}/><br/>
-			<label>tokenGasPrice</label><input type="number" bind:value={purchase_tokenGasPrice}/><br/>
-			<label>relayer</label><input type="string" bind:value={purchase_relayer}/><br/>
-		</details>
-		<br/>
-		<br/>
-		<hr/>
-		<p>Your Numbers NFT below (only show 11 max) :</p>
-		<hr/>
-		<ul>
-		{#each $account.numbers as item}
-			<li>{item}</li>
-		{:else}
-		<p>You do not own any Number NFT yet!</p>
-		{/each}
-		</ul>
+		<div class="bg-gray-200 overflow-hidden rounded-lg mt-5 my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>MTX is a token that support our MetaTx standard and can thus be used without any extra step. You can even start interacting with contracts that support the standard and they can even charge tokens (no pre-approval required!).</p>
+			</div>
+		</div>
+
+		<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+			<div class="px-4 py-5 sm:p-0">
+				<dl>
+				  <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5">
+					<dt class="text-sm leading-5 font-medium text-gray-500">
+						Your MTX Balance:
+					</dt>
+					<dd class="mt-1 text-sm leading-5 text-gray-900 sm:mt-0 sm:col-span-2">
+						{$account.mtxBalance.div('1000000000000000') / 1000}
+					</dd>
+				  </div>
+				</dl>
+			</div>
+		</div>
+
+		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Here, for example, you can send a metatx to a NFT sale contract that expect to take from you 1 MTX in exchange of an NFT</p>
+			</div>
+		</div>
+		
+		<div class="bg-white shadow sm:rounded-lg">
+			<div class="text-center">
+				<span class="inline-flex rounded-md shadow-sm">
+					<button on:click="{() => purchaseNumber()}" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150">
+						buy an NFT for 1 MTX
+					</button>
+				</span>
+			</div>
+
+			<details class="mb-10">
+				<summary>advanced Meta Tx settings</summary>
+				<div class="mt-6 sm:mt-5">
+					<SettingsOption label="MTX amount" type="number" bind:value={purchase_amount}/>
+					<SettingsOption label="expiry" type="datetime" bind:value={purchase_expiry}/>
+					<SettingsOption label="txGas" type="number" bind:value={purchase_txGas}/>
+					<SettingsOption label="batchId" type="number" bind:value={purchase_batchId}/>
+					<SettingsOption label="nonce" type="number" bind:value={purchase_nonce}/>
+					<SettingsOption label="tokenGasPrice" type="number" bind:value={purchase_tokenGasPrice}/>
+					<SettingsOption label="relayer" type="string" bind:value={purchase_relayer}/>
+				</div>
+			</details>
+		</div>
+		
+		<div>
+			<div>
+			  <h3 class="text-lg leading-6 font-medium text-gray-900">
+				Your NFTs below
+			  </h3>
+			  <p class="max-w-2xl text-sm leading-5 text-gray-500">
+				(only show 11 max)
+			  </p>
+			</div>
+			<div class="mt-5 border-t border-gray-200 pt-5">
+				<ul>
+					{#each $account.numbers as item}
+						<li>{item}</li>
+					{:else}
+					<p>You do not own any Number NFT yet!</p>
+					{/each}
+				</ul>
+			</div>
+		</div>
+		
 		{#if $account.numbers.length}
-		<hr/>
-		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
-		<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of MTX, unless you need to pay the relayer, see advanced settings))</p>
-		<p><input placeholder="address" bind:value={transferTo}/></p>
-		<p><button class="button" on:click="{() => transferFirstNumber()}">transfer</button></p>
-		<details>
-			<summary>advanced Meta Tx settings</summary>
-			<label>MTX amount</label><input type="number" bind:value={transfer_amount}/><br/>
-			<label>expiry</label><input type="datetime" bind:value={transfer_expiry}/><br/>
-			<label>txGas</label><input type="number" bind:value={transfer_txGas}/><br/>
-			<label>batchId</label><input type="number" bind:value={transfer_batchId}/><br/>
-			<label>nonce</label><input type="number" bind:value={transfer_nonce}/><br/>
-			<label>tokenGasPrice</label><input type="number" bind:value={transfer_tokenGasPrice}/><br/>
-			<label>relayer</label><input type="string" bind:value={transfer_relayer}/><br/>
-		</details>
+		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of MTX, unless you need to pay the relayer, see advanced settings))</p>
+			</div>
+		</div>
+
+		<div class="bg-white shadow sm:rounded-lg">
+			<div class="px-4 py-5 sm:p-6 items-center text-center">
+				<h3 class="text-lg leading-6 font-medium text-gray-900">
+					Transfer NFTs
+				</h3>
+				<p>
+					Transfer NFT "{$account.numbers[0]}" to another account.
+				</p>
+				<label for="address" class="sr-only">Destination address</label>
+				<div class="relative rounded-md shadow-sm inline-block m-5">
+					<input id="address" bind:value={transferTo} class="form-input inline sm:text-sm sm:leading-5" placeholder="address" />
+				</div>
+				<p></p>
+				<span class="mt-3 inline-flex rounded-md shadow-sm sm:mt-0 sm:ml-3 sm:w-auto">
+					<button on:click="{() => transferFirstNumber()}" type="button" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150 sm:w-auto sm:text-sm sm:leading-5">
+						Transfer NFT "{$account.numbers[0]}"
+					</button>
+				</span>
+			</div>
+
+			<details class="mb-10">
+				<summary>advanced Meta Tx settings</summary>
+				<div class="mt-6 sm:mt-5">
+					<SettingsOption label="MTX amount" type="number" bind:value={transfer_amount}/>
+					<SettingsOption label="expiry" type="datetime" bind:value={transfer_expiry}/>
+					<SettingsOption label="txGas" type="number" bind:value={transfer_txGas}/>
+					<SettingsOption label="batchId" type="number" bind:value={transfer_batchId}/>
+					<SettingsOption label="nonce" type="number" bind:value={transfer_nonce}/>
+					<SettingsOption label="tokenGasPrice" type="number" bind:value={transfer_tokenGasPrice}/>
+					<SettingsOption label="relayer" type="string" bind:value={transfer_relayer}/>
+				</div>
+			</details>
+		</div>
 		{/if}
 	{:else if $account.status == 'Unavailable'}
 	<span> please wait... <!--unlock account--> </span> <!-- temporary state, TODO synchronise flow -->
