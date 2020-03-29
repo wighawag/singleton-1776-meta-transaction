@@ -14,8 +14,8 @@
 
 		<!-- logo -->
 		<div class="flex-shrink-0">
-          <img class="block lg:hidden h-8 w-auto" src="/img/logos/workflow-mark-on-dark.svg" alt="" />
-          <img class="hidden lg:block h-8 w-auto" src="/img/logos/workflow-logo-on-dark.svg" alt="" />
+          <img class="block lg:hidden h-8 w-auto" src="/img/logos/wig32x32.svg" alt="" />
+          <img class="hidden lg:block h-8 w-auto" src="/img/logos/logo-on-dark.svg" alt="" />
         </div>
 		<!-- logo -->
 
