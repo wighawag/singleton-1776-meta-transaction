@@ -2,6 +2,7 @@
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
+import MessageBox from '../components/MessageBox';
 import SettingsOption from '../components/SettingsOption';
 import WalletWrapper from '../components/WalletWrapper';
 import account from '../stores/account';
@@ -433,7 +434,7 @@ async function purchaseNumber() {
 
 		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
 			<div class="px-4 py-5 sm:p-6">
-				<p>Here, for example, you can send a metatx to a NFT sale contract that expect to take from you 1 MTX in exchange of an NFT</p>
+				<p>Here, for example, you can send a meta transaction to a NFT sale contract that will charge you 1 MTX in exchange of an NFT</p>
 			</div>
 		</div>
 		
@@ -483,7 +484,7 @@ async function purchaseNumber() {
 		{#if $account.numbers.length}
 		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
 			<div class="px-4 py-5 sm:p-6">
-				<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of MTX, unless you need to pay the relayer, see advanced settings))</p>
+				<p>Here you can send a meta transaction to the NFT (ERC721) contract to transfer your token. (no need of MTX, unless you need to pay the relayer, see advanced settings))</p>
 			</div>
 		</div>
 
@@ -522,9 +523,9 @@ async function purchaseNumber() {
 		</div>
 		{/if}
 	{:else if $account.status == 'Unavailable'}
-	<span> please wait... <!--unlock account--> </span> <!-- temporary state, TODO synchronise flow -->
+	<MessageBox> Please wait... <!--unlock account--> </MessageBox> <!-- temporary state, TODO synchronise flow -->
 	{:else}
-	<span> ERROR </span>
+	<MessageBox> ERROR </MessageBox>
 	{/if}
 	
 </WalletWrapper>

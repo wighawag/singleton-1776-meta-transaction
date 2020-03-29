@@ -2,21 +2,31 @@
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
+import MessageBox from './MessageBox';
 
 $: showModal = ($wallet && $wallet.status && $wallet.status !== 'Loading' && ((!$wallet.chainNotSupported && $relayer.status == 'Error') || $wallet.requestingSignature || $metatx.status != 'none'));
 
 </script>
 
 {#if $wallet.status == 'Loading'}
-<br/>
-    <h3> Please wait... </h3>
+    <MessageBox> Please wait... </MessageBox>
 {:else if $wallet.status == 'Locked'}
-<br/>
-    <p>This demo requires you to have a wallet compatible with the EIP-712 standard. Please note that this has been tested only on Metamask.</p>
-    <p><button class="button" on:click="{wallet.unlock}">Connect your wallet</button></p>
+    <div class="bg-gray-200 overflow-hidden rounded-lg mt-3">
+        <div class="px-4 py-5 sm:p-6">	
+            <p>This demo requires you to have a wallet compatible with the EIP-712 standard. Please note that this has been tested only on Metamask.</p>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <span class="inline-flex rounded-md shadow-sm mt-2">
+            <button on:click="{wallet.unlock}" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150">
+                Connect your wallet
+            </button>
+        </span>
+    </div>
+    
 {:else if $wallet.status == 'Unlocking'}
-<br/>
-    <h3> Please accept the connection request </h3>
+<MessageBox> Please accept the connection request </MessageBox>
 {:else if $wallet.status == 'NoWallet'}
 <br/>
   <h3>You need a web3 wallet</h3>

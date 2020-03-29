@@ -2,6 +2,8 @@
 import wallet from '../stores/wallet';
 import metatx from '../stores/metatx';
 import relayer from '../stores/relayer';
+import MessageBox from '../components/MessageBox';
+import SettingsOption from '../components/SettingsOption';
 import WalletWrapper from '../components/WalletWrapper';
 import account from '../stores/account';
 import * as ethers from 'ethers';
@@ -491,16 +493,22 @@ async function permitDAI() {
 <svelte:head>
 	<title>Meta Tx Demo</title>
 </svelte:head>
+<div class="md:flex md:items-center md:justify-between m-5">
+	<div class="flex-1 min-w-0">
+		<h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncate">
+			EIP-1776 Meta Transaction Demo
+		</h2>
+	</div>
+</div>
 
-<WalletWrapper>
-    <h2 class="center">Meta Tx Demo</h2>
-    <!-- <figure>
-        <img alt='Borat' src='great-success.png'>
-        <figcaption>HIGH FIVE!</figcaption>
-    </figure> -->
+<div class="bg-gray-200 overflow-hidden rounded-lg">
+	<div class="px-4 py-5 sm:p-6">	
+		<p>Welcome to the <a class="underline" href="https://gitcoin.co/issue/MetaMask/Hackathons/2/3865">Take Back The Web Hackathon</a> Demo For a Meta Transaction Standard</p>
+		<p>This demo showcase the benefit of EIP-1776 standard and how it can be set up as a singleton contract that any contract can use to provide a seamingless experience to user without ether. More details <a class="underline" href="about">here</a>.</p>		
+	</div>
+</div>
 
-	
-	
+<WalletWrapper>	
 	{#if $account.status == 'Loading'}
 	<hr/>
     <span> fetching account info </span>
@@ -508,83 +516,156 @@ async function permitDAI() {
 	{:else if $account.status == 'Loaded'}
 		
 		{#if $account.hasApprovedMetaTxProcessorForDAI}
-		<hr/>
-		<p>Congrats, you already authorized our singleton metatx processor to handle DAI</p>
-		<p>Your DAI Balance:</p>
-		<hr/>
-		<h3 class="center">{$account.daiBalance.div('1000000000000000') / 1000}</h3>
-		<hr/>
-		<p>Here, you can send a metatx to a NFT sale contract that expect to take from you 1 DAI in exchange of an NFT</p>
-		<p><button class="button" on:click="{() => purchaseNumber()}">buy a Number for 1 DAI</button></p>
-		<details>
-			<summary>advanced Meta Tx settings</summary>
-			<label>DAI amount</label><input type="number" bind:value={purchase_amount}/><br/>
-			<label>expiry</label><input type="datetime" bind:value={purchase_expiry}/><br/>
-			<label>txGas</label><input type="number" bind:value={purchase_txGas}/><br/>
-			<label>batchId</label><input type="number" bind:value={purchase_batchId}/><br/>
-			<label>nonce</label><input type="number" bind:value={purchase_nonce}/><br/>
-			<label>tokenGasPrice</label><input type="number" bind:value={purchase_tokenGasPrice}/><br/>
-			<label>relayer</label><input type="string" bind:value={purchase_relayer}/><br/>
-		</details>
-		{:else}
-		<hr/>
-		<p>Your DAI Balance:</p>
-		<hr/>
-		<h3 class="center">{$account.daiBalance.div('1000000000000000000')}</h3>
-		<p>Since DAI was created before such proposal, you would need to first approve your token to be used by the meta transaction processor.
-		Fortunately, DAI allow us to do that with a simple signature (via permit call)</p>
-		<p><button class="button" on:click="{() => permitDAI()}">Approve MetaTx Processor</button></p>
-		{/if}
-		<br/>
-		<br/>
-		<hr/>
-		<p>Your Numbers NFT below (only show 11 max) :</p>
-		<hr/>
-		<ul>
-		{#each $account.numbers as item}
-			<li>{item}</li>
-		{:else}
-		<p>You do not own any Number NFT yet!</p>
-		{/each}
-		</ul>
-		{#if $account.numbers.length}
-		<hr/>
-		<p>Transfer Number ({$account.numbers[0]}) to another account</p>
-		<p>Here you can send a metatx to the NFT (ERC721) contract to transfer your token. (no need of DAI, unless you need to pay the relayer, see advanced settings)</p>
-		<p><input placeholder="address" bind:value={transferTo}/></p>
-		<p><button class="button" on:click="{() => transferFirstNumber()}">transfer</button></p>
-		<details>
-			<summary>advanced Meta Tx settings</summary>
-			<label>DAI amount</label><input type="number" bind:value={transfer_amount}/><br/>
-			<label>expiry</label><input type="datetime" bind:value={transfer_expiry}/><br/>
-			<label>txGas</label><input type="number" bind:value={transfer_txGas}/><br/>
-			<label>batchId</label><input type="number" bind:value={transfer_batchId}/><br/>
-			<label>nonce</label><input type="number" bind:value={transfer_nonce}/><br/>
-			<label>tokenGasPrice</label><input type="number" bind:value={transfer_tokenGasPrice}/><br/>
-			<label>relayer</label><input type="string" bind:value={transfer_relayer}/><br/>
-		</details>
-		{/if}
+		<div class="bg-gray-200 overflow-hidden rounded-lg mt-5 my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Congrats, you already authorized our singleton metatx processor to handle DAI</p>
+			</div>
+		</div>
+		
+		<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+			<div class="px-4 py-5 sm:p-0">
+				<dl>
+				  <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5">
+					<dt class="text-sm leading-5 font-medium text-gray-500">
+						Your DAI Balance:
+					</dt>
+					<dd class="mt-1 text-sm leading-5 text-gray-900 sm:mt-0 sm:col-span-2">
+						{$account.daiBalance.div('1000000000000000') / 1000}
+					</dd>
+				  </div>
+				</dl>
+			</div>
+		</div>
 
-		<!-- {#if $account.hasApprovedMetaTxProcessorForDAI}
-		<hr/>
-		<p>And you can of course transfer DAI</p>
-		<p><input placeholder="address" bind:value={transferTo}/></p>
-		<p><button class="button" on:click="{() => transferDAI()}">send 0.5 DAI to someone</button></p>
-		<details>
-			<summary>advanced Meta Tx settings</summary>
-			<label>DAI amount</label><input type="number" bind:value={dai_transfer_amount}/><br/>
-			<label>expiry</label><input type="datetime" bind:value={dai_transfer_expiry}/><br/>
-			<label>txGas</label><input type="number" bind:value={dai_transfer_txGas}/><br/>
-			<label>batchId</label><input type="number" bind:value={dai_transfer_batchId}/><br/>
-			<label>nonce</label><input type="number" bind:value={dai_transfer_nonce}/><br/>
-			<label>tokenGasPrice</label><input type="number" bind:value={dai_transfer_tokenGasPrice}/><br/>
-			<label>relayer</label><input type="string" bind:value={dai_transfer_relayer}/><br/>
-		</details>
-		{/if} -->
+		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Here, you can send a meta transaction to a NFT sale contract that will charge you 1 DAI in exchange of an NFT</p>
+			</div>
+		</div>
+		
+		<div class="bg-white shadow sm:rounded-lg">
+			<div class="text-center">
+				<span class="inline-flex rounded-md shadow-sm">
+					<button on:click="{() => purchaseNumber()}" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150">
+						buy an NFT for 1 DAI
+					</button>
+				</span>
+			</div>
+
+			<details class="mb-10">
+				<summary>advanced Meta Tx settings</summary>
+				<div class="mt-6 sm:mt-5">
+					<SettingsOption label="DAI amount" type="number" bind:value={purchase_amount}/>
+					<SettingsOption label="expiry" type="datetime" bind:value={purchase_expiry}/>
+					<SettingsOption label="txGas" type="number" bind:value={purchase_txGas}/>
+					<SettingsOption label="batchId" type="number" bind:value={purchase_batchId}/>
+					<SettingsOption label="nonce" type="number" bind:value={purchase_nonce}/>
+					<SettingsOption label="tokenGasPrice" type="number" bind:value={purchase_tokenGasPrice}/>
+					<SettingsOption label="relayer" type="string" bind:value={purchase_relayer}/>
+				</div>
+			</details>
+		</div>
+		{:else}
+
+		<div class="bg-gray-200 overflow-hidden rounded-lg mt-5 my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Since DAI was created before such proposal, you would need to first approve your token to be used by the meta transaction processor.
+					Fortunately, DAI allow us to do that with a simple signature (via permit call)</p>
+			</div>
+		</div>
+
+		<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+			<div class="px-4 py-5 sm:p-0">
+				<dl>
+				  <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5">
+					<dt class="text-sm leading-5 font-medium text-gray-500">
+						Your DAI Balance:
+					</dt>
+					<dd class="mt-1 text-sm leading-5 text-gray-900 sm:mt-0 sm:col-span-2">
+						{$account.daiBalance.div('1000000000000000') / 1000}
+					</dd>
+				  </div>
+				</dl>
+			</div>
+		</div>
+
+		
+
+		<div class="bg-white shadow sm:rounded-lg">
+			<div class="text-center">
+				<span class="inline-flex rounded-md shadow-sm">
+					<button on:click="{() => permitDAI()}" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150">
+						Approve Meta Transaction Processor
+					</button>
+				</span>
+			</div>
+		</div>
+		{/if}
+		<div>
+			<div>
+			  <h3 class="text-lg leading-6 font-medium text-gray-900">
+				Your NFTs below
+			  </h3>
+			  <p class="max-w-2xl text-sm leading-5 text-gray-500">
+				(only show 11 max)
+			  </p>
+			</div>
+			<div class="mt-5 border-t border-gray-200 pt-5">
+				<ul>
+					{#each $account.numbers as item}
+						<li>{item}</li>
+					{:else}
+					<p>You do not own any Number NFT yet!</p>
+					{/each}
+				</ul>
+			</div>
+		</div>
+		
+		{#if $account.numbers.length}
+		<div class="bg-gray-200 overflow-hidden rounded-lg my-5">
+			<div class="px-4 py-5 sm:p-6">
+				<p>Here you can send a meta transaction to the NFT (ERC721) contract to transfer your token. (no need of DAI, unless you need to pay the relayer, see advanced settings))</p>
+			</div>
+		</div>
+
+		<div class="bg-white shadow sm:rounded-lg">
+			<div class="px-4 py-5 sm:p-6 items-center text-center">
+				<h3 class="text-lg leading-6 font-medium text-gray-900">
+					Transfer NFTs
+				</h3>
+				<p>
+					Transfer NFT "{$account.numbers[0]}" to another account.
+				</p>
+				<label for="address" class="sr-only">Destination address</label>
+				<div class="relative rounded-md shadow-sm inline-block m-5">
+					<input id="address" bind:value={transferTo} class="form-input inline sm:text-sm sm:leading-5" placeholder="address" />
+				</div>
+				<p></p>
+				<span class="mt-3 inline-flex rounded-md shadow-sm sm:mt-0 sm:ml-3 sm:w-auto">
+					<button on:click="{() => transferFirstNumber()}" type="button" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition ease-in-out duration-150 sm:w-auto sm:text-sm sm:leading-5">
+						Transfer NFT "{$account.numbers[0]}"
+					</button>
+				</span>
+			</div>
+
+			<details class="mb-10">
+				<summary>advanced Meta Tx settings</summary>
+				<div class="mt-6 sm:mt-5">
+					<SettingsOption label="DAI amount" type="number" bind:value={transfer_amount}/>
+					<SettingsOption label="expiry" type="datetime" bind:value={transfer_expiry}/>
+					<SettingsOption label="txGas" type="number" bind:value={transfer_txGas}/>
+					<SettingsOption label="batchId" type="number" bind:value={transfer_batchId}/>
+					<SettingsOption label="nonce" type="number" bind:value={transfer_nonce}/>
+					<SettingsOption label="tokenGasPrice" type="number" bind:value={transfer_tokenGasPrice}/>
+					<SettingsOption label="relayer" type="string" bind:value={transfer_relayer}/>
+				</div>
+			</details>
+		</div>
+		{/if}
 	{:else if $account.status == 'Unavailable'}
-	<span> please wait... <!--unlock account--> </span> <!-- temporary state, TODO synchronise flow -->
+	<MessageBox> Please wait... <!--unlock account--> </MessageBox> <!-- temporary state, TODO synchronise flow -->
 	{:else}
-	<span> ERROR </span>
+	<MessageBox> ERROR </MessageBox>
 	{/if}
 	
 </WalletWrapper>

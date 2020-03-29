@@ -2,7 +2,47 @@
 	<title>About Meta Tx Demo</title>
 </svelte:head>
 
-<h1>About Meta Tx Demo</h1>
+<style>
+	/* h1 {
+		@apply text-3xl m-5 mt-4 font-bold
+	} */
+
+	h2 {
+		@apply text-2xl m-5
+	}
+
+	h3 {
+		@apply text-lg m-5 
+	}
+
+	ul {
+		@apply list-inside m-5
+	}
+
+	li {
+		@apply list-disc m-3 ml-5
+	}
+
+	strong {
+		@apply font-bold
+	}
+
+	p {
+		@apply m-5 text-base
+	}
+
+	a {
+		@apply underline
+	}
+</style>
+
+<div class="md:flex md:items-center md:justify-between m-5">
+	<div class="flex-1 min-w-0">
+		<h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncate">
+			EIP-1776 Meta Transaction Demo
+		</h1>
+	</div>
+</div>
 
 <p>This demo shows case an <a href="https://github.com/ethereum/EIPs/issues/1776">EIP-1776</a> compliant Meta Transaction processor as a Singleton Contract</p>
 
