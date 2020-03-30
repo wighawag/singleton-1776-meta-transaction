@@ -9,7 +9,7 @@ services:
       - '8030:8030'
       - '8040:8040'
     depends_on:
-      - ethereum
+      # - ethereum
       - ipfs
       - postgres
     environment:
@@ -18,8 +18,9 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
-      ethereum: 'mainnet:http://ethereum:8545'
+      ethereum: 'dev:http://host.docker.internal:8545'
       RUST_LOG: info
+      GRAPH_LOG: trace
   ipfs:
     image: ipfs/go-ipfs
     ports:
@@ -36,7 +37,7 @@ services:
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
       PGDATA: /tmp
-  ethereum:
-    image: trufflesuite/ganache-cli:latest
-    ports:
-      - "8545:8545"
+  # ethereum:
+  #   image: trufflesuite/ganache-cli:latest
+  #   ports:
+  #     - "8545:8545"

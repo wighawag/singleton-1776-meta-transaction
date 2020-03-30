@@ -19,6 +19,9 @@ module.exports = {
     sources: 'src'
   },
   networks: {
+    buidlerevm: {
+      loggingEnabled: true,
+    },
     // TODO blockTime: 6, ?
     rinkeby: {
       url: 'https://rinkeby.infura.io/v3/bc0bdd4eaac640278cdebc3aa91fabe4',
