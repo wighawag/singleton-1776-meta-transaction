@@ -6,11 +6,16 @@
 </script>
 
 <Tailwindcss />
+
 <style global >
 	.button {
 		/* hover:text-white hover:bg-purple-500 */
 		@apply text-purple-500 border border-purple-500 text-xs font-semibold rounded-full px-4 py-1 leading-normal
 	}
+
+	/* .disabled {
+		@apply cursor: none; and opacity: 50%;
+	} */
 </style>
 
 <Nav {segment}/>
