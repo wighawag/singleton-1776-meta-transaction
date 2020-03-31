@@ -13,7 +13,19 @@ module.exports = {
       optimizer: {
           enabled: true,
           runs: 200
-      }
+      },
+      // settings: {
+      //   metadata: {
+      //     useLiteralContent: false
+      //   },
+      //   outputSelection: {
+      //     "*": {
+      //       "*": [
+      //         "metadata"
+      //       ]
+      //     }
+      //   }
+      // }
   },
   paths: {
     sources: 'src'
