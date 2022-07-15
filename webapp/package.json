@@ -25,7 +25,7 @@
   "devDependencies": {
     "npm-run-all": "^4.1.5",
     "sapper": "git://github.com/wighawag/sapper.git#relative_baseUrl",
-    "svelte": "^3.0.0",
+    "svelte": "^3.49.0",
     "svelte-loader": "^2.9.0",
     "webpack": "^4.7.0"
   }
